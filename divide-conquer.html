@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Divide & Conquer | ALGO Visualizer</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+:root{--accent:var(--blue);--accent-g:var(--blue-g)}
+.merge-tree{display:flex;flex-direction:column;gap:8px;align-items:center;overflow:auto;padding:10px}
+.merge-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.merge-group{display:flex;gap:3px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);transition:all .3s}
+.merge-group.active{border-color:var(--blue);background:var(--blue-g)}
+.merge-group.merging{border-color:var(--green);background:rgba(16,185,129,0.15)}
+.merge-el{min-width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:5px;font-size:13px;font-weight:700;background:var(--bg4);transition:all .3s}
+.merge-el.cmp{background:rgba(245,158,11,0.3);color:var(--amber)}
+.merge-el.placed{background:rgba(16,185,129,0.3);color:var(--green)}
+.merge-el.pivot{background:rgba(244,63,94,0.3);color:var(--rose)}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="orb orb1"></div><div class="orb orb2"></div>
+
+<header class="app-header">
+  <a class="logo" href="index.html"><div class="logo-icon">⚡</div><span class="logo-name">ALGO Visualizer</span></a>
+  <div class="breadcrumb">
+    <a class="bc-link" href="index.html">Home</a>
+    <span class="bc-sep">/</span>
+    <span class="bc-cat" style="color:var(--blue)">Divide &amp; Conquer</span>
+    <span class="bc-sep">/</span>
+    <span class="bc-current" id="bc-algo">Merge Sort</span>
+  </div>
+</header>
+
+<div class="app-body">
+  <aside class="sidebar">
+    <div class="sidebar-head">Algorithms</div>
+    <button class="algo-btn active" onclick="selectAlgo('merge')" id="btn-merge"><span class="algo-dot"></span>Merge Sort</button>
+    <button class="algo-btn" onclick="selectAlgo('quick')" id="btn-quick"><span class="algo-dot"></span>Quick Sort</button>
+  </aside>
+
+  <div class="main-panel">
+    <div class="algo-header">
+      <div class="algo-tag" id="algo-tag">⚡ Divide &amp; Conquer</div>
+      <div class="algo-title" id="algo-title">Merge Sort</div>
+      <div class="algo-desc" id="algo-desc">Divides the array into halves, recursively sorts each half, then merges them back in sorted order.</div>
+    </div>
+
+    <div class="tabs-bar">
+      <button class="tab-btn active" onclick="showTab('visualizer')">🎬 Visualizer</button>
+      <button class="tab-btn" onclick="showTab('explanation')">📖 Explanation</button>
+      <button class="tab-btn" onclick="showTab('code')">💻 Code</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-visualizer">
+      <div class="input-card">
+        <div class="card-label">Input</div>
+        <div class="input-row">
+          <div class="field"><label>Array (comma-separated)</label><input id="arr-input" value="64,34,25,12,22,11,90" placeholder="e.g. 38,27,43,3,9,82,10"></div>
+          <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+          <button class="btn btn-secondary" onclick="randomArr()">🎲 Random</button>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <div class="card-label" id="viz-label">Visualization</div>
+        <div id="viz-area" style="min-height:220px"></div>
+      </div>
+
+      <div class="controls-card">
+        <div class="controls-row">
+          <button class="ctrl-btn" onclick="prevStep()" title="Previous">⏮</button>
+          <button class="ctrl-btn play-btn" id="play-btn" onclick="togglePlay()">▶</button>
+          <button class="ctrl-btn" onclick="nextStep()" title="Next">⏭</button>
+          <button class="ctrl-btn" onclick="resetAlgo()" title="Reset">🔄</button>
+          <span class="step-counter" id="step-counter">Step 0 / 0</span>
+          <div class="speed-wrap">
+            <span class="speed-label">Speed</span>
+            <input class="speed-input" type="range" id="speed" min="1" max="10" value="5">
+            <span class="speed-label" id="speed-val">5x</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="trace-card">
+        <div class="card-label">Step Trace</div>
+        <div id="trace-list"></div>
+      </div>
+
+      <div class="complexity-card">
+        <div class="card-label">Complexity Analysis</div>
+        <div class="complexity-grid" id="complexity-grid"></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-explanation">
+      <div class="explain-section"><h3>Problem</h3><p id="exp-problem"></p></div>
+      <div class="explain-section"><h3>Approach</h3><ul id="exp-approach"></ul></div>
+      <div class="explain-section"><h3>Pseudocode</h3><div class="pseudo-block" id="exp-pseudo"></div></div>
+    </div>
+
+    <div class="tab-panel" id="tab-code">
+      <div class="lang-tabs">
+        <button class="lang-btn active" onclick="showLang('cpp')">C++</button>
+        <button class="lang-btn" onclick="showLang('py')">Python</button>
+        <button class="lang-btn" onclick="showLang('js')">JavaScript</button>
+      </div>
+      <div class="code-block" id="code-display"></div>
+    </div>
+
+    <div class="status-bar"><div class="status-dot idle" id="status-dot"></div><span id="status-text">Ready — click Visualize to start</span></div>
+  </div>
+</div>
+
+<script>
+const ALGOS = {
+  merge: {
+    name:'Merge Sort', tag:'⚡ Divide & Conquer',
+    desc:'Divides the array into halves, recursively sorts each half, then merges them back in sorted order.',
+    complexity:[{l:'Best',v:'O(n log n)'},{l:'Average',v:'O(n log n)'},{l:'Worst',v:'O(n log n)'},{l:'Space',v:'O(n)'}],
+    problem:'Given an unsorted array of n elements, sort it in ascending order using the Merge Sort algorithm which follows the Divide and Conquer paradigm.',
+    approach:['Divide the array into two halves at the midpoint','Recursively sort each half','Merge the two sorted halves by comparing elements one by one','Continue until the entire array is sorted'],
+    pseudo:`MergeSort(arr, l, r):
+  if l >= r: return
+  mid = (l + r) / 2
+  MergeSort(arr, l, mid)
+  MergeSort(arr, mid+1, r)
+  Merge(arr, l, mid, r)
+
+Merge(arr, l, mid, r):
+  left = arr[l..mid], right = arr[mid+1..r]
+  i=0, j=0, k=l
+  while i<len(left) and j<len(right):
+    if left[i] <= right[j]: arr[k++] = left[i++]
+    else: arr[k++] = right[j++]
+  copy remaining elements`,
+    codes:{
+      cpp:`#include <iostream>
+#include <vector>
+using namespace std;
+
+void merge(vector<int>& arr, int l, int m, int r) {
+    vector<int> left(arr.begin()+l, arr.begin()+m+1);
+    vector<int> right(arr.begin()+m+1, arr.begin()+r+1);
+    int i=0, j=0, k=l;
+    while(i<left.size() && j<right.size())
+        arr[k++] = (left[i]<=right[j]) ? left[i++] : right[j++];
+    while(i<left.size()) arr[k++]=left[i++];
+    while(j<right.size()) arr[k++]=right[j++];
+}
+
+void mergeSort(vector<int>& arr, int l, int r) {
+    if(l >= r) return;
+    int m = (l+r)/2;
+    mergeSort(arr, l, m);
+    mergeSort(arr, m+1, r);
+    merge(arr, l, m, r);
+}
+
+int main() {
+    vector<int> arr = {64,34,25,12,22,11,90};
+    mergeSort(arr, 0, arr.size()-1);
+    for(int x : arr) cout << x << " ";
+}`,
+      py:`def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+    return merge(left, right)
+
+def merge(left, right):
+    result = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i]); i += 1
+        else:
+            result.append(right[j]); j += 1
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
+
+arr = [64,34,25,12,22,11,90]
+print(merge_sort(arr))`,
+      js:`function mergeSort(arr) {
+  if (arr.length <= 1) return arr;
+  const mid = Math.floor(arr.length / 2);
+  const left = mergeSort(arr.slice(0, mid));
+  const right = mergeSort(arr.slice(mid));
+  return merge(left, right);
+}
+
+function merge(left, right) {
+  const result = [];
+  let i = 0, j = 0;
+  while (i < left.length && j < right.length) {
+    result.push(left[i] <= right[j] ? left[i++] : right[j++]);
+  }
+  return result.concat(left.slice(i)).concat(right.slice(j));
+}
+
+console.log(mergeSort([64,34,25,12,22,11,90]));`
+    },
+    genSteps(input){
+      const arr=input.map(Number); const steps=[];
+      function ms(a,l,r){
+        if(l>=r)return;
+        const m=Math.floor((l+r)/2);
+        steps.push({arr:[...a],hl:[l,r],mid:m,phase:'divide',desc:`Divide [${a.slice(l,r+1).join(',')}] at index ${m}`,explain:`Split into [${a.slice(l,m+1).join(',')}] and [${a.slice(m+1,r+1).join(',')}]`});
+        ms(a,l,m); ms(a,m+1,r);
+        mg(a,l,m,r);
+      }
+      function mg(a,l,m,r){
+        const L=a.slice(l,m+1),R=a.slice(m+1,r+1);
+        let i=0,j=0,k=l;
+        while(i<L.length&&j<R.length){
+          steps.push({arr:[...a],hl:[l+i,m+1+j],cmp:[l+i,m+1+j],phase:'merge',desc:`Compare ${L[i]} and ${R[j]} → place ${L[i]<=R[j]?L[i]:R[j]}`,explain:`Merging range [${l}..${r}], picking smaller element`});
+          if(L[i]<=R[j])a[k++]=L[i++]; else a[k++]=R[j++];
+        }
+        while(i<L.length)a[k++]=L[i++];
+        while(j<R.length)a[k++]=R[j++];
+        steps.push({arr:[...a],hl:[l,r],phase:'merged',desc:`Merged: [${a.slice(l,r+1).join(',')}]`,explain:`Range [${l}..${r}] is now sorted`});
+      }
+      steps.push({arr:[...arr],hl:[],phase:'start',desc:'Starting Merge Sort',explain:'We will recursively divide and merge'});
+      ms(arr,0,arr.length-1);
+      steps.push({arr:[...arr],hl:arr.map((_,i)=>i),phase:'done',desc:'✅ Array Sorted: ['+arr.join(',')+']',explain:'Merge Sort complete!'});
+      return steps;
+    },
+    render(step,arr){
+      const max=Math.max(...step.arr,1);
+      const colors=step.arr.map((_,i)=>{
+        if(step.phase==='done') return 'bar-sorted';
+        if(step.cmp&&step.cmp.includes(i)) return 'bar-compare';
+        if(step.phase==='merged'&&step.hl&&i>=step.hl[0]&&i<=step.hl[1]) return 'bar-sorted';
+        if(step.hl&&i>=step.hl[0]&&i<=step.hl[1]) return 'bar-compare';
+        return 'bar-default';
+      });
+      return `<div class="bars-wrap">${step.arr.map((v,i)=>`<div class="bar ${colors[i]}" style="height:${Math.max(14,(v/max)*200)}px"><span class="bar-val">${v}</span></div>`).join('')}</div>`;
+    }
+  },
+  quick: {
+    name:'Quick Sort', tag:'⚡ Divide & Conquer',
+    desc:'Picks a pivot element, partitions the array around it so smaller elements go left and larger go right, then recursively sorts sub-arrays.',
+    complexity:[{l:'Best',v:'O(n log n)'},{l:'Average',v:'O(n log n)'},{l:'Worst',v:'O(n²)'},{l:'Space',v:'O(log n)'}],
+    problem:'Given an unsorted array, sort it using Quick Sort by selecting a pivot and partitioning elements around it.',
+    approach:['Choose last element as pivot','Partition: move elements smaller than pivot to left, larger to right','Place pivot in its correct final position','Recursively apply to left and right sub-arrays'],
+    pseudo:`QuickSort(arr, low, high):
+  if low < high:
+    pi = Partition(arr, low, high)
+    QuickSort(arr, low, pi-1)
+    QuickSort(arr, pi+1, high)
+
+Partition(arr, low, high):
+  pivot = arr[high]
+  i = low - 1
+  for j = low to high-1:
+    if arr[j] <= pivot:
+      i++; swap(arr[i], arr[j])
+  swap(arr[i+1], arr[high])
+  return i+1`,
+    codes:{
+      cpp:`#include <iostream>
+#include <vector>
+using namespace std;
+
+int partition(vector<int>& arr, int low, int high) {
+    int pivot = arr[high], i = low-1;
+    for(int j=low; j<high; j++)
+        if(arr[j]<=pivot) swap(arr[++i], arr[j]);
+    swap(arr[i+1], arr[high]);
+    return i+1;
+}
+
+void quickSort(vector<int>& arr, int low, int high) {
+    if(low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi-1);
+        quickSort(arr, pi+1, high);
+    }
+}
+
+int main() {
+    vector<int> arr = {64,34,25,12,22,11,90};
+    quickSort(arr, 0, arr.size()-1);
+    for(int x : arr) cout << x << " ";
+}`,
+      py:`def quick_sort(arr, low=0, high=None):
+    if high is None: high = len(arr)-1
+    if low < high:
+        pi = partition(arr, low, high)
+        quick_sort(arr, low, pi-1)
+        quick_sort(arr, pi+1, high)
+
+def partition(arr, low, high):
+    pivot = arr[high]
+    i = low - 1
+    for j in range(low, high):
+        if arr[j] <= pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+    arr[i+1], arr[high] = arr[high], arr[i+1]
+    return i+1
+
+arr = [64,34,25,12,22,11,90]
+quick_sort(arr)
+print(arr)`,
+      js:`function quickSort(arr, low=0, high=arr.length-1) {
+  if (low < high) {
+    const pi = partition(arr, low, high);
+    quickSort(arr, low, pi-1);
+    quickSort(arr, pi+1, high);
+  }
+  return arr;
+}
+
+function partition(arr, low, high) {
+  const pivot = arr[high];
+  let i = low - 1;
+  for (let j = low; j < high; j++) {
+    if (arr[j] <= pivot) {
+      i++;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+  [arr[i+1], arr[high]] = [arr[high], arr[i+1]];
+  return i+1;
+}
+
+console.log(quickSort([64,34,25,12,22,11,90]));`
+    },
+    genSteps(input){
+      const arr=input.map(Number); const steps=[];
+      function qs(a,lo,hi){
+        if(lo>=hi)return;
+        const pivot=a[hi];
+        steps.push({arr:[...a],pivot:hi,hl:[lo,hi],phase:'pivot',desc:`Pivot = ${pivot} at index ${hi}`,explain:`We'll partition [${a.slice(lo,hi+1).join(',')}] around pivot ${pivot}`});
+        let i=lo-1;
+        for(let j=lo;j<hi;j++){
+          steps.push({arr:[...a],pivot:hi,cmp:[j],i,phase:'compare',desc:`Compare arr[${j}]=${a[j]} with pivot ${pivot}`,explain:a[j]<=pivot?`${a[j]} ≤ ${pivot}, will move to left partition`:`${a[j]} > ${pivot}, stays in right partition`});
+          if(a[j]<=pivot){i++;[a[i],a[j]]=[a[j],a[i]];steps.push({arr:[...a],pivot:hi,swapped:[i,j],phase:'swap',desc:`Swap arr[${i}]=${a[i]} and arr[${j}]=${a[j]}`,explain:`Moved ${a[i]} to left partition`});}
+        }
+        [a[i+1],a[hi]]=[a[hi],a[i+1]];
+        const pi=i+1;
+        steps.push({arr:[...a],sorted:[pi],hl:[lo,hi],phase:'placed',desc:`Pivot ${a[pi]} placed at index ${pi}`,explain:`Pivot is now in its final sorted position`});
+        qs(a,lo,pi-1); qs(a,pi+1,hi);
+      }
+      steps.push({arr:[...arr],hl:[],phase:'start',desc:'Starting Quick Sort',explain:'Choose last element as pivot each time'});
+      qs(arr,0,arr.length-1);
+      steps.push({arr:[...arr],hl:arr.map((_,i)=>i),phase:'done',desc:'✅ Sorted: ['+arr.join(',')+']',explain:'Quick Sort complete!'});
+      return steps;
+    },
+    render(step){
+      const max=Math.max(...step.arr,1);
+      return `<div class="bars-wrap">${step.arr.map((v,i)=>{
+        let cls='bar-default';
+        if(step.phase==='done')cls='bar-sorted';
+        else if(step.sorted&&step.sorted.includes(i))cls='bar-sorted';
+        else if(step.pivot===i)cls='bar-pivot';
+        else if(step.cmp&&step.cmp.includes(i))cls='bar-compare';
+        else if(step.swapped&&step.swapped.includes(i))cls='bar-swap';
+        return `<div class="bar ${cls}" style="height:${Math.max(14,(v/max)*200)}px"><span class="bar-val">${v}</span></div>`;
+      }).join('')}</div>`;
+    }
+  }
+};
+
+let current='merge', steps=[], stepIdx=0, playing=false, timer=null, currentLang='cpp';
+
+function selectAlgo(id){
+  current=id;
+  document.querySelectorAll('.algo-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btn-'+id).classList.add('active');
+  const A=ALGOS[id];
+  document.getElementById('bc-algo').textContent=A.name;
+  document.getElementById('algo-tag').textContent=A.tag;
+  document.getElementById('algo-title').textContent=A.name;
+  document.getElementById('algo-desc').textContent=A.desc;
+  resetAlgo(); loadExplain(); loadCode();
+}
+
+function loadExplain(){
+  const A=ALGOS[current];
+  document.getElementById('exp-problem').textContent=A.problem;
+  document.getElementById('exp-approach').innerHTML=A.approach.map(s=>`<li>${s}</li>`).join('');
+  document.getElementById('exp-pseudo').textContent=A.pseudo;
+}
+
+function loadCode(){
+  const A=ALGOS[current];
+  document.getElementById('code-display').textContent=A.codes[currentLang]||'';
+}
+
+function showLang(l){
+  currentLang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  loadCode();
+}
+
+function showTab(t){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+}
+
+function getInput(){return document.getElementById('arr-input').value.split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));}
+
+function randomArr(){
+  const n=Math.floor(Math.random()*6)+5;
+  document.getElementById('arr-input').value=Array.from({length:n},()=>Math.floor(Math.random()*90)+10).join(',');
+}
+
+function initAlgo(){
+  const input=getInput();
+  if(!input.length){alert('Enter valid numbers!');return;}
+  steps=ALGOS[current].genSteps(input);
+  stepIdx=0;
+  updateComplexity();
+  renderStep();
+  setStatus('ready');
+}
+
+function updateComplexity(){
+  const c=ALGOS[current].complexity;
+  document.getElementById('complexity-grid').innerHTML=c.map(x=>`<div class="complexity-item"><div class="complexity-label">${x.l}</div><div class="complexity-value">${x.v}</div></div>`).join('');
+}
+
+function renderStep(){
+  if(!steps.length)return;
+  const s=steps[Math.min(stepIdx,steps.length-1)];
+  document.getElementById('viz-label').textContent=`Step ${stepIdx+1} / ${steps.length}`;
+  document.getElementById('step-counter').textContent=`Step ${stepIdx+1} / ${steps.length}`;
+  document.getElementById('viz-area').innerHTML=ALGOS[current].render(s);
+  updateTrace(s);
+}
+
+function updateTrace(s){
+  const list=document.getElementById('trace-list');
+  const item=document.createElement('div');
+  item.className='trace-item current fade-in';
+  item.innerHTML=`<div>${s.desc}</div><div class="trace-explain">${s.explain}</div>`;
+  const prev=list.querySelector('.current');
+  if(prev)prev.className='trace-item done';
+  list.prepend(item);
+  while(list.children.length>8)list.removeChild(list.lastChild);
+}
+
+function nextStep(){
+  if(stepIdx<steps.length-1){stepIdx++;renderStep();}
+  else{stopPlay();setStatus('done');}
+}
+
+function prevStep(){stopPlay();if(stepIdx>0){stepIdx--;renderStep();}}
+
+function togglePlay(){
+  if(playing)stopPlay();
+  else startPlay();
+}
+
+function startPlay(){
+  if(!steps.length){initAlgo();return;}
+  playing=true;
+  document.getElementById('play-btn').textContent='⏸';
+  document.getElementById('status-dot').className='status-dot running';
+  document.getElementById('status-text').textContent='Running...';
+  function tick(){
+    if(stepIdx>=steps.length-1){stopPlay();setStatus('done');return;}
+    stepIdx++;renderStep();
+    const spd=parseInt(document.getElementById('speed').value);
+    timer=setTimeout(tick,1100-spd*100);
+  }
+  tick();
+}
+
+function stopPlay(){
+  playing=false;
+  clearTimeout(timer);
+  document.getElementById('play-btn').textContent='▶';
+  if(document.getElementById('status-dot').className.includes('running'))
+    setStatus('ready');
+}
+
+function resetAlgo(){
+  stopPlay();steps=[];stepIdx=0;
+  document.getElementById('viz-area').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--t3);font-size:14px">Enter input and click Visualize</div>';
+  document.getElementById('trace-list').innerHTML='';
+  document.getElementById('step-counter').textContent='Step 0 / 0';
+  document.getElementById('viz-label').textContent='Visualization';
+  setStatus('idle');
+}
+
+function setStatus(s){
+  const dot=document.getElementById('status-dot');
+  const txt=document.getElementById('status-text');
+  if(s==='idle'){dot.className='status-dot idle';txt.textContent='Ready — click Visualize to start';}
+  else if(s==='ready'){dot.className='status-dot';txt.textContent='Steps generated — use controls to navigate';}
+  else if(s==='done'){dot.className='status-dot';txt.textContent='✅ Algorithm complete!';}
+}
+
+document.getElementById('speed').addEventListener('input',function(){
+  document.getElementById('speed-val').textContent=this.value+'x';
+});
+
+selectAlgo('merge');
+loadExplain();
+loadCode();
+</script>
+</body>
+</html>

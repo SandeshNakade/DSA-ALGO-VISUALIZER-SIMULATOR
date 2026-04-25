@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Backtracking | ALGO Visualizer</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --accent: var(--purple);
+      --accent-g: rgba(168, 85, 247, 0.2);
+    }
+
+    /* Board Grids */
+    .board-container {
+      display: inline-block;
+      border: 2px solid var(--border2);
+      background: var(--bg3);
+      padding: 5px;
+      border-radius: 8px;
+    }
+
+    .grid-row {
+      display: flex;
+    }
+
+    .grid-cell {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 20px;
+      border: 1px solid var(--border);
+    }
+
+    /* N-Queens */
+    .nq-cell.black {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nq-cell.white {
+      background: var(--bg2);
+    }
+
+    .nq-cell.safe {
+      background: rgba(16, 185, 129, 0.3);
+      border-color: var(--green);
+    }
+
+    .nq-cell.unsafe {
+      background: rgba(244, 63, 94, 0.3);
+      border-color: var(--rose);
+    }
+
+    .nq-cell.queen {
+      color: var(--purple);
+      text-shadow: 0 0 10px var(--purple);
+    }
+
+    /* Sudoku */
+    .sd-cell {
+      width: 30px;
+      height: 30px;
+      font-size: 16px;
+      background: var(--bg2);
+    }
+
+    .sd-cell.fixed {
+      color: var(--t3);
+    }
+
+    .sd-cell.trying {
+      background: rgba(245, 158, 11, 0.3);
+      color: var(--amber);
+    }
+
+    .sd-cell.placed {
+      color: var(--green);
+      text-shadow: 0 0 5px var(--green);
+    }
+
+    .sd-cell.backtrack {
+      background: rgba(244, 63, 94, 0.3);
+      color: var(--rose);
+      text-decoration: line-through;
+    }
+
+    .sd-row:nth-child(3n) .sd-cell {
+      border-bottom: 2px solid var(--border2);
+    }
+
+    .sd-cell:nth-child(3n) {
+      border-right: 2px solid var(--border2);
+    }
+
+    /* Rat in Maze */
+    .rm-cell {
+      width: 40px;
+      height: 40px;
+      background: var(--bg2);
+      transition: 0.3s;
+    }
+
+    .rm-cell.wall {
+      background: var(--bg4);
+      border-color: var(--border2);
+    }
+
+    .rm-cell.path {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--green);
+    }
+
+    .rm-cell.current {
+      background: var(--purple);
+      color: #fff;
+      box-shadow: 0 0 15px var(--purple);
+      transform: scale(1.1);
+      z-index: 2;
+      position: relative;
+      border-radius: 4px;
+    }
+
+    .rm-cell.backtrack {
+      background: rgba(244, 63, 94, 0.2);
+      color: var(--rose);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-grid"></div>
+  <div class="orb orb1" style="background:rgba(168,85,247,0.12)"></div>
+  <div class="orb orb2" style="background:rgba(168,85,247,0.08)"></div>
+
+  <header class="app-header">
+    <a class="logo" href="index.html">
+      <div class="logo-icon">⚡</div><span class="logo-name">ALGO Visualizer</span>
+    </a>
+    <div class="breadcrumb">
+      <a class="bc-link" href="index.html">Home</a>
+      <span class="bc-sep">/</span>
+      <span class="bc-cat" style="color:var(--purple)">Backtracking</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current" id="bc-algo">N-Queens</span>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-head">Algorithms</div>
+      <button class="algo-btn" onclick="selectAlgo('nQueens')" id="btn-nQueens"><span class="algo-dot"></span>N-Queens
+        Problem</button>
+      <button class="algo-btn" onclick="selectAlgo('sudoku')" id="btn-sudoku"><span class="algo-dot"></span>Sudoku
+        Solver</button>
+      <button class="algo-btn" onclick="selectAlgo('ratMaze')" id="btn-ratMaze"><span class="algo-dot"></span>Rat in a
+        Maze</button>
+      <button class="algo-btn" onclick="selectAlgo('graphColoring')" id="btn-graphColoring"><span
+          class="algo-dot"></span>Graph Coloring</button>
+      <button class="algo-btn" onclick="selectAlgo('tsp')" id="btn-tsp"><span class="algo-dot"></span>Travelling
+        Salesperson</button>
+    </aside>
+
+    <div class="main-panel">
+      <div class="algo-header">
+        <div class="algo-tag" id="algo-tag">🟣 Backtracking</div>
+        <div class="algo-title" id="algo-title">N-Queens Problem</div>
+        <div class="algo-desc" id="algo-desc"></div>
+      </div>
+
+      <div class="tabs-bar">
+        <button class="tab-btn active" onclick="showTab('visualizer')">🎬 Visualizer</button>
+        <button class="tab-btn" onclick="showTab('explanation')">📖 Explanation</button>
+        <button class="tab-btn" onclick="showTab('code')">💻 Code</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-visualizer">
+        <div class="input-card">
+          <div class="card-label">Input</div>
+          <div class="input-row" id="input-container">
+            <!-- Dynamic Input -->
+          </div>
+        </div>
+
+        <div class="viz-card">
+          <div class="card-label" id="viz-label">Visualization</div>
+          <div id="viz-area" style="min-height:300px;display:flex;justify-content:center;align-items:center;"></div>
+        </div>
+
+        <div class="controls-card">
+          <div class="controls-row">
+            <button class="ctrl-btn" onclick="prevStep()">⏮</button>
+            <button class="ctrl-btn play-btn" id="play-btn" onclick="togglePlay()">▶</button>
+            <button class="ctrl-btn" onclick="nextStep()">⏭</button>
+            <button class="ctrl-btn" onclick="resetAlgo()">🔄</button>
+            <span class="step-counter" id="step-counter">Step 0 / 0</span>
+            <div class="speed-wrap">
+              <span class="speed-label">Speed</span>
+              <input class="speed-input" type="range" id="speed" min="1" max="10" value="7">
+              <span class="speed-label" id="speed-val">7x</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="trace-card">
+          <div class="card-label">Step Trace</div>
+          <div id="trace-list"></div>
+        </div>
+
+        <div class="complexity-card">
+          <div class="card-label">Complexity Analysis</div>
+          <div class="complexity-grid" id="complexity-grid"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-explanation">
+        <div class="explain-section">
+          <h3>Problem</h3>
+          <p id="exp-problem"></p>
+        </div>
+        <div class="explain-section">
+          <h3>Approach</h3>
+          <ul id="exp-approach"></ul>
+        </div>
+        <div class="explain-section">
+          <h3>Pseudocode</h3>
+          <div class="pseudo-block" id="exp-pseudo"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-code">
+        <div class="lang-tabs">
+          <button class="lang-btn active" onclick="showLang('cpp')">C++</button>
+          <button class="lang-btn" onclick="showLang('py')">Python</button>
+          <button class="lang-btn" onclick="showLang('js')">JavaScript</button>
+        </div>
+        <div class="code-block" id="code-display"></div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-dot idle" id="status-dot"></div><span id="status-text">Ready — click Visualize to
+          start</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ALGOS = {
+      nQueens: {
+        name: 'N-Queens Problem', tag: '🟣 Backtracking',
+        desc: 'Place N queens on an N×N chessboard so that no two queens attack each other.',
+        complexity: [{ l: 'Time', v: 'O(N!)' }, { l: 'Space', v: 'O(N)' }],
+        problem: 'Given an integer N, place N queens on an NxN chessboard such that no queen shares the same row, column, or diagonal as another queen.',
+        approach: ['Start in the leftmost column', 'If all queens are placed, return true', 'Try all rows in the current column', 'If placing queen is safe, place it and recursively solve for next column', 'If it leads to a solution, return true. Else backtrack (remove queen)'],
+        pseudo: `function solveNQ(col):
+  if col >= N: return True
+  for row from 0 to N-1:
+    if isSafe(row, col):
+      board[row][col] = 1
+      if solveNQ(col + 1): return True
+      board[row][col] = 0 // backtrack
+  return False`,
+        codes: {
+          cpp: `bool isSafe(int row, int col, vector<string>& board, int n) {
+    int duprow = row, dupcol = col;
+    while(row >= 0 && col >= 0) if(board[row--][col--] == 'Q') return false;
+    col = dupcol; row = duprow;
+    while(col >= 0) if(board[row][col--] == 'Q') return false;
+    col = dupcol; row = duprow;
+    while(row < n && col >= 0) if(board[row++][col--] == 'Q') return false;
+    return true;
+}
+
+bool solve(int col, vector<string>& board, vector<vector<string>>& ans, int n) {
+    if(col == n) { ans.push_back(board); return true; } // Return true to find just one solution
+    for(int row = 0; row < n; row++) {
+        if(isSafe(row, col, board, n)) {
+            board[row][col] = 'Q';
+            if(solve(col + 1, board, ans, n)) return true;
+            board[row][col] = '.';
+        }
+    }
+    return false;
+}`,
+          py: `def solveNQueens(n):
+    board = [['.'] * n for _ in range(n)]
+    res = []
+    
+    def isSafe(r, c):
+        for i in range(c):
+            if board[r][i] == 'Q': return False
+        for i, j in zip(range(r, -1, -1), range(c, -1, -1)):
+            if board[i][j] == 'Q': return False
+        for i, j in zip(range(r, n), range(c, -1, -1)):
+            if board[i][j] == 'Q': return False
+        return True
+
+    def backtrack(c):
+        if c == n: return True
+        for r in range(n):
+            if isSafe(r, c):
+                board[r][c] = 'Q'
+                if backtrack(c + 1): return True
+                board[r][c] = '.'
+        return False
+        
+    backtrack(0)
+    return board`,
+          js: `function solveNQueens(n) {
+    let board = Array.from({length: n}, () => Array(n).fill('.'));
+    
+    function isSafe(row, col) {
+        for(let i=0; i<col; i++) if(board[row][i] === 'Q') return false;
+        for(let i=row, j=col; i>=0 && j>=0; i--, j--) if(board[i][j] === 'Q') return false;
+        for(let i=row, j=col; j>=0 && i<n; i++, j--) if(board[i][j] === 'Q') return false;
+        return true;
+    }
+    
+    function solve(col) {
+        if(col === n) return true;
+        for(let row=0; row<n; row++) {
+            if(isSafe(row, col)) {
+                board[row][col] = 'Q';
+                if(solve(col + 1)) return true;
+                board[row][col] = '.';
+            }
+        }
+        return false;
+    }
+    
+    solve(0);
+    return board;
+}`
+        },
+        inputs: `
+          <div class="field"><label>Board Size (N)</label><input id="nq-n" type="number" min="4" max="8" value="4" style="width:80px"></div>
+          <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+        `,
+        genSteps() {
+          let N = parseInt(document.getElementById('nq-n').value);
+          if (N > 8) N = 8;
+          let board = Array(N).fill().map(() => Array(N).fill(0));
+          let steps = [];
+
+          steps.push({ board: JSON.parse(JSON.stringify(board)), n: N, desc: 'Empty Board', explain: 'Start placing queens from column 0' });
+
+          function isSafe(row, col) {
+            let r, c;
+            for (c = 0; c < col; c++) if (board[row][c]) return false;
+            for (r = row, c = col; r >= 0 && c >= 0; r--, c--) if (board[r][c]) return false;
+            for (r = row, c = col; r < N && c >= 0; r++, c--) if (board[r][c]) return false;
+            return true;
+          }
+
+          function solve(col) {
+            if (col >= N) return true;
+            for (let row = 0; row < N; row++) {
+              steps.push({
+                board: JSON.parse(JSON.stringify(board)), hl: [row, col], state: 'trying', n: N,
+                desc: `Checking Row ${row}, Col ${col}`, explain: `Can we place a Queen here?`
+              });
+
+              if (isSafe(row, col)) {
+                board[row][col] = 1;
+                steps.push({
+                  board: JSON.parse(JSON.stringify(board)), hl: [row, col], state: 'safe', n: N,
+                  desc: `Placed Queen`, explain: `Safe at [${row},${col}]. Moving to column ${col + 1}`
+                });
+
+                if (solve(col + 1)) return true;
+
+                board[row][col] = 0;
+                steps.push({
+                  board: JSON.parse(JSON.stringify(board)), hl: [row, col], state: 'backtrack', n: N,
+                  desc: `Backtracking`, explain: `No solution found with Queen at [${row},${col}]. Removing it.`
+                });
+              } else {
+                steps.push({
+                  board: JSON.parse(JSON.stringify(board)), hl: [row, col], state: 'unsafe', n: N,
+                  desc: `Unsafe Position`, explain: `Cell [${row},${col}] is under attack by another Queen.`
+                });
+              }
+            }
+            return false;
+          }
+
+          let solved = solve(0);
+          steps.push({ board: JSON.parse(JSON.stringify(board)), n: N, desc: 'Finished', explain: solved ? 'Found a valid configuration!' : 'No solution exists for this N.' });
+          return steps;
+        },
+        render(s) {
+          let html = '<div class="board-container">';
+          for (let r = 0; r < s.n; r++) {
+            html += '<div class="grid-row">';
+            for (let c = 0; c < s.n; c++) {
+              let isDark = (r + c) % 2 === 1;
+              let bg = isDark ? 'black' : 'white';
+              let content = s.board[r][c] ? '♛' : '';
+
+              if (s.hl && s.hl[0] === r && s.hl[1] === c) {
+                if (s.state === 'trying') content = '♕';
+                bg = s.state;
+              }
+
+              let qClass = s.board[r][c] ? 'queen' : '';
+              html += `<div class="grid-cell nq-cell ${bg} ${qClass}">${content}</div>`;
+            }
+            html += '</div>';
+          }
+          html += '</div>';
+          return html;
+        }
+      },
+      sudoku: {
+        name: 'Sudoku Solver', tag: '🟣 Backtracking',
+        desc: 'Fill a 9×9 grid with digits so that each column, row, and 3×3 sub-grid contain all digits from 1 to 9.',
+        complexity: [{ l: 'Time', v: 'O(9^(n*n))' }, { l: 'Space', v: 'O(n*n)' }],
+        problem: 'Given a partially filled 9x9 2D array grid, fill the empty slots.',
+        approach: ['Find an empty cell', 'Try numbers 1-9 in that cell', 'Check if the number is valid in row, col, and 3x3 box', 'If valid, place and recursively solve', 'If it leads to failure, backtrack and try next number'],
+        pseudo: `function solve(board):
+  for row from 0 to 8:
+    for col from 0 to 8:
+      if board[row][col] == empty:
+        for num from 1 to 9:
+          if isValid(board, row, col, num):
+            board[row][col] = num
+            if solve(board) == True: return True
+            board[row][col] = empty // backtrack
+        return False // no valid number found
+  return True // solved`,
+        codes: {
+          cpp: `bool isValid(vector<vector<char>>& board, int row, int col, char c) {
+    for (int i = 0; i < 9; i++) {
+        if (board[i][col] == c) return false;
+        if (board[row][i] == c) return false;
+        if (board[3 * (row / 3) + i / 3][3 * (col / 3) + i % 3] == c) return false;
+    }
+    return true;
+}
+
+bool solve(vector<vector<char>>& board) {
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            if (board[i][j] == '.') {
+                for (char c = '1'; c <= '9'; c++) {
+                    if (isValid(board, i, j, c)) {
+                        board[i][j] = c;
+                        if (solve(board)) return true;
+                        board[i][j] = '.';
+                    }
+                }
+                return false;
+            }
+        }
+    }
+    return true;
+}`,
+          py: `def solveSudoku(board):
+    def isValid(r, c, num):
+        for i in range(9):
+            if board[i][c] == num: return False
+            if board[r][i] == num: return False
+            if board[3 * (r // 3) + i // 3][3 * (c // 3) + i % 3] == num: return False
+        return True
+        
+    def solve():
+        for r in range(9):
+            for c in range(9):
+                if board[r][c] == '.':
+                    for num in map(str, range(1, 10)):
+                        if isValid(r, c, num):
+                            board[r][c] = num
+                            if solve(): return True
+                            board[r][c] = '.'
+                    return False
+        return True
+        
+    solve()`,
+          js: `function solveSudoku(board) {
+    function isValid(row, col, c) {
+        for (let i = 0; i < 9; i++) {
+            if (board[i][col] === c) return false;
+            if (board[row][i] === c) return false;
+            if (board[3 * Math.floor(row / 3) + Math.floor(i / 3)][3 * Math.floor(col / 3) + i % 3] === c) return false;
+        }
+        return true;
+    }
+
+    function solve() {
+        for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+                if (board[i][j] === '.') {
+                    for (let c = 1; c <= 9; c++) {
+                        let str = c.toString();
+                        if (isValid(i, j, str)) {
+                            board[i][j] = str;
+                            if (solve()) return true;
+                            board[i][j] = '.';
+                        }
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    solve();
+}`
+        },
+        inputs: `
+          <div class="field"><label>Initial Board String (81 chars, '.' for empty)</label><input id="sd-str" value="53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79" style="width:250px"></div>
+          <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+        `,
+        genSteps() {
+          let str = document.getElementById('sd-str').value;
+          if (str.length !== 81) str = ".................................................................................";
+
+          let board = [];
+          let fixed = [];
+          for (let i = 0; i < 9; i++) {
+            board.push([]); fixed.push([]);
+            for (let j = 0; j < 9; j++) {
+              let c = str[i * 9 + j];
+              board[i].push(c === '.' ? 0 : parseInt(c));
+              fixed[i].push(c !== '.');
+            }
+          }
+
+          let steps = [];
+          steps.push({ board: JSON.parse(JSON.stringify(board)), fixed, desc: 'Initial Grid', explain: 'Finding first empty cell' });
+
+          function isValid(r, c, num) {
+            for (let i = 0; i < 9; i++) {
+              if (board[r][i] === num) return false;
+              if (board[i][c] === num) return false;
+              let br = 3 * Math.floor(r / 3) + Math.floor(i / 3);
+              let bc = 3 * Math.floor(c / 3) + (i % 3);
+              if (board[br][bc] === num) return false;
+            }
+            return true;
+          }
+
+          let stepCount = 0;
+          function solve() {
+            for (let r = 0; r < 9; r++) {
+              for (let c = 0; c < 9; c++) {
+                if (board[r][c] === 0) {
+                  for (let n = 1; n <= 9; n++) {
+                    if (stepCount++ < 10000) {
+                      steps.push({
+                        board: JSON.parse(JSON.stringify(board)), fixed, hl: [r, c], num: n, state: 'trying',
+                        desc: `Try ${n} at [${r},${c}]`, explain: `Checking row, col, and 3x3 box for ${n}`
+                      });
+                    }
+
+                    if (isValid(r, c, n)) {
+                      board[r][c] = n;
+                      if (stepCount++ < 10000) {
+                        steps.push({
+                          board: JSON.parse(JSON.stringify(board)), fixed, hl: [r, c], state: 'placed',
+                          desc: `Placed ${n}`, explain: `${n} is valid. Continuing...`
+                        });
+                      }
+
+                      if (solve()) return true;
+
+                      board[r][c] = 0;
+                      if (stepCount++ < 10000) {
+                        steps.push({
+                          board: JSON.parse(JSON.stringify(board)), fixed, hl: [r, c], state: 'backtrack',
+                          desc: `Backtrack [${r},${c}]`, explain: `Dead end reached. Removing ${n}`
+                        });
+                      }
+                    }
+                  }
+                  return false;
+                }
+              }
+            }
+            return true;
+          }
+
+          solve();
+          steps.push({ board: JSON.parse(JSON.stringify(board)), fixed, desc: 'Finished', explain: stepCount > 10000 ? 'Visualization limited to 10000 steps, but board is solved.' : 'Sudoku solved successfully!' });
+          return steps;
+        },
+        render(s) {
+          let html = '<div class="board-container">';
+          for (let r = 0; r < 9; r++) {
+            html += '<div class="grid-row sd-row">';
+            for (let c = 0; c < 9; c++) {
+              let val = s.board[r][c] || '';
+              let cls = s.fixed[r][c] ? 'fixed' : '';
+
+              if (s.hl && s.hl[0] === r && s.hl[1] === c) {
+                if (s.state === 'trying') { val = s.num; cls = 'trying'; }
+                if (s.state === 'placed') cls = 'placed';
+                if (s.state === 'backtrack') cls = 'backtrack';
+              }
+
+              html += `<div class="grid-cell sd-cell ${cls}">${val}</div>`;
+            }
+            html += '</div>';
+          }
+          html += '</div>';
+          return html;
+        }
+      },
+      ratMaze: {
+        name: 'Rat in a Maze', tag: '🟣 Backtracking',
+        desc: 'Find a path from source (top-left) to destination (bottom-right) in a maze.',
+        complexity: [{ l: 'Time', v: 'O(4^(n*n))' }, { l: 'Space', v: 'O(n*n)' }],
+        problem: 'Given an NxN matrix where 1 means open path and 0 means blocked wall, find a path from [0][0] to [N-1][N-1].',
+        approach: ['Start at [0][0]', 'Check boundary and wall conditions', 'Mark cell as visited (path)', 'Recursively try moving Down, Right, Up, Left', 'If destination reached, return true. If no move works, backtrack (unmark)'],
+        pseudo: `function solveMaze(r, c):
+  if r == N-1 and c == N-1: return True
+  if isSafe(r, c):
+    path[r][c] = 1
+    if solveMaze(r+1, c): return True // Down
+    if solveMaze(r, c+1): return True // Right
+    if solveMaze(r-1, c): return True // Up
+    if solveMaze(r, c-1): return True // Left
+    path[r][c] = 0 // backtrack
+    return False
+  return False`,
+        codes: {
+          cpp: `bool isSafe(vector<vector<int>>& maze, int x, int y, int N) {
+    return (x >= 0 && x < N && y >= 0 && y < N && maze[x][y] == 1);
+}
+
+bool solveMazeUtil(vector<vector<int>>& maze, int x, int y, vector<vector<int>>& sol, int N) {
+    if (x == N - 1 && y == N - 1 && maze[x][y] == 1) {
+        sol[x][y] = 1; return true;
+    }
+    if (isSafe(maze, x, y, N)) {
+        if (sol[x][y] == 1) return false;
+        sol[x][y] = 1;
+        if (solveMazeUtil(maze, x + 1, y, sol, N)) return true;
+        if (solveMazeUtil(maze, x, y + 1, sol, N)) return true;
+        if (solveMazeUtil(maze, x - 1, y, sol, N)) return true;
+        if (solveMazeUtil(maze, x, y - 1, sol, N)) return true;
+        sol[x][y] = 0;
+        return false;
+    }
+    return false;
+}`,
+          py: `def solveMaze(maze):
+    N = len(maze)
+    sol = [[0 for j in range(N)] for i in range(N)]
+    
+    def isSafe(x, y):
+        return x >= 0 and x < N and y >= 0 and y < N and maze[x][y] == 1
+        
+    def solveMazeUtil(x, y):
+        if x == N - 1 and y == N - 1 and maze[x][y] == 1:
+            sol[x][y] = 1
+            return True
+            
+        if isSafe(x, y):
+            if sol[x][y] == 1: return False
+            sol[x][y] = 1
+            if solveMazeUtil(x + 1, y): return True
+            if solveMazeUtil(x, y + 1): return True
+            if solveMazeUtil(x - 1, y): return True
+            if solveMazeUtil(x, y - 1): return True
+            sol[x][y] = 0
+            return False
+        return False
+        
+    if not solveMazeUtil(0, 0): return False
+    return sol`,
+          js: `function solveMaze(maze) {
+    let N = maze.length;
+    let sol = Array.from({length: N}, () => Array(N).fill(0));
+    
+    function isSafe(x, y) {
+        return x >= 0 && x < N && y >= 0 && y < N && maze[x][y] === 1;
+    }
+    
+    function solveMazeUtil(x, y) {
+        if (x === N - 1 && y === N - 1 && maze[x][y] === 1) {
+            sol[x][y] = 1; return true;
+        }
+        
+        if (isSafe(x, y)) {
+            if (sol[x][y] === 1) return false;
+            sol[x][y] = 1;
+            if (solveMazeUtil(x + 1, y)) return true;
+            if (solveMazeUtil(x, y + 1)) return true;
+            if (solveMazeUtil(x - 1, y)) return true;
+            if (solveMazeUtil(x, y - 1)) return true;
+            sol[x][y] = 0;
+            return false;
+        }
+        return false;
+    }
+    
+    if(!solveMazeUtil(0, 0)) return false;
+    return sol;
+}`
+        },
+        inputs: `
+          <div class="field"><label>Maze Matrix (rows comma-separated)</label><input id="rm-maze" value="1000,1101,0100,1111" style="width:250px"></div>
+          <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+        `,
+        genSteps() {
+          let rows = document.getElementById('rm-maze').value.split(',');
+          let N = rows.length;
+          let maze = rows.map(r => r.trim().split('').map(Number));
+          let path = Array(N).fill().map(() => Array(N).fill(0));
+
+          let steps = [];
+          steps.push({ maze, path: JSON.parse(JSON.stringify(path)), N, desc: 'Initial Maze', explain: 'White = Path, Gray = Wall. Start at [0,0]' });
+
+          function isSafe(r, c) {
+            return r >= 0 && r < N && c >= 0 && c < N && maze[r][c] === 1 && path[r][c] === 0;
+          }
+
+          function solve(r, c) {
+            if (r === N - 1 && c === N - 1 && maze[r][c] === 1) {
+              path[r][c] = 1;
+              steps.push({ maze, path: JSON.parse(JSON.stringify(path)), hl: [r, c], N, desc: 'Destination Reached!', explain: 'Successfully found a path.' });
+              return true;
+            }
+
+            if (isSafe(r, c)) {
+              path[r][c] = 1;
+              steps.push({ maze, path: JSON.parse(JSON.stringify(path)), hl: [r, c], N, desc: `Moved to [${r},${c}]`, explain: 'Marking cell as part of the path.' });
+
+              if (solve(r + 1, c)) return true; // Down
+              if (solve(r, c + 1)) return true; // Right
+              if (solve(r - 1, c)) return true; // Up
+              if (solve(r, c - 1)) return true; // Left
+
+              path[r][c] = 0;
+              steps.push({ maze, path: JSON.parse(JSON.stringify(path)), hl: [r, c], state: 'backtrack', N, desc: `Backtrack from [${r},${c}]`, explain: 'No valid moves from here. Reverting.' });
+              return false;
+            }
+            return false;
+          }
+
+          if (maze[0][0] === 1) solve(0, 0);
+          steps.push({ maze, path: JSON.parse(JSON.stringify(path)), N, desc: 'Finished', explain: path[N - 1] && path[N - 1][N - 1] ? 'Path found!' : 'No valid path exists.' });
+          return steps;
+        },
+        render(s) {
+          let html = '<div class="board-container">';
+          for (let r = 0; r < s.N; r++) {
+            html += '<div class="grid-row">';
+            for (let c = 0; c < s.N; c++) {
+              let cls = s.maze[r][c] === 0 ? 'wall' : '';
+              if (s.path[r][c] === 1) cls += ' path';
+              if (s.hl && s.hl[0] === r && s.hl[1] === c) {
+                if (s.state === 'backtrack') cls += ' backtrack';
+                else cls += ' current';
+              }
+              let content = '';
+              if (r === 0 && c === 0) content = '🐁';
+              if (r === s.N - 1 && c === s.N - 1) content = '🧀';
+              html += `<div class="grid-cell rm-cell ${cls}">${content}</div>`;
+            }
+            html += '</div>';
+          }
+          html += '</div>';
+          return html;
+        }
+      },
+      graphColoring: {
+        name: 'Graph Coloring', tag: '🟣 Backtracking',
+        desc: 'Assign m colors to vertices of a graph such that no two adjacent vertices have the same color.',
+        complexity: [{ l: 'Time', v: 'O(m^V)' }, { l: 'Space', v: 'O(V)' }],
+        problem: 'Given an undirected graph and a number m, determine if the graph can be colored with at most m colors such that no two adjacent vertices of the graph are colored with the same color.',
+        approach: ['Start coloring vertices one by one, starting from vertex 0', 'For each vertex, try all colors from 1 to m', 'Before assigning a color, check if it is safe (no adjacent vertex has the same color)', 'If safe, assign color and recursively call for the next vertex', 'If no color works, backtrack and return false'],
+        pseudo: `function solveGraphColoring(vertex):
+  if vertex == V: return True
+  for c from 1 to m:
+    if isSafe(vertex, c):
+      color[vertex] = c
+      if solveGraphColoring(vertex + 1): return True
+      color[vertex] = 0 // backtrack
+  return False`,
+        codes: {
+          cpp: `bool isSafe(int v, vector<vector<int>>& graph, vector<int>& color, int c, int V) {
+    for (int i = 0; i < V; i++) {
+        if (graph[v][i] == 1 && color[i] == c)
+            return false;
+    }
+    return true;
+}
+
+bool graphColoringUtil(vector<vector<int>>& graph, int m, vector<int>& color, int v, int V) {
+    if (v == V) return true;
+    for (int c = 1; c <= m; c++) {
+        if (isSafe(v, graph, color, c, V)) {
+            color[v] = c;
+            if (graphColoringUtil(graph, m, color, v + 1, V)) return true;
+            color[v] = 0;
+        }
+    }
+    return false;
+}`,
+          py: `def isSafe(v, graph, color, c, V):
+    for i in range(V):
+        if graph[v][i] == 1 and color[i] == c:
+            return False
+    return True
+
+def graphColoringUtil(graph, m, color, v, V):
+    if v == V:
+        return True
+    for c in range(1, m + 1):
+        if isSafe(v, graph, color, c, V):
+            color[v] = c
+            if graphColoringUtil(graph, m, color, v + 1, V):
+                return True
+            color[v] = 0
+    return False`,
+          js: `function isSafe(v, graph, color, c, V) {
+    for (let i = 0; i < V; i++) {
+        if (graph[v][i] === 1 && color[i] === c) return false;
+    }
+    return true;
+}
+
+function graphColoringUtil(graph, m, color, v, V) {
+    if (v === V) return true;
+    for (let c = 1; c <= m; c++) {
+        if (isSafe(v, graph, color, c, V)) {
+            color[v] = c;
+            if (graphColoringUtil(graph, m, color, v + 1, V)) return true;
+            color[v] = 0;
+        }
+    }
+    return false;
+}`
+        },
+        inputs: `
+          <div class="field"><label>Graph Adj Matrix (rows comma-separated)</label><input id="gc-graph" value="0111,1010,1101,1010" style="width:250px"></div>
+          <div class="field"><label>Colors (m)</label><input id="gc-m" type="number" min="1" max="6" value="3" style="width:80px"></div>
+          <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+        `,
+        genSteps() {
+          let rows = document.getElementById('gc-graph').value.split(',');
+          let V = rows.length;
+          let graph = rows.map(r => r.trim().split('').map(Number));
+          let m = parseInt(document.getElementById('gc-m').value);
+          let color = Array(V).fill(0);
+
+          let steps = [];
+          steps.push({ graph, color: [...color], V, m, desc: 'Initial Graph', explain: `Trying to color ${V} vertices with ${m} colors.` });
+
+          function isSafe(v, c) {
+            for (let i = 0; i < V; i++) {
+              if (graph[v][i] === 1 && color[i] === c) return false;
+            }
+            return true;
+          }
+
+          function solve(v) {
+            if (v === V) {
+              steps.push({ graph, color: [...color], hl: -1, V, m, desc: 'Solution Found!', explain: 'All vertices colored successfully.' });
+              return true;
+            }
+
+            for (let c = 1; c <= m; c++) {
+              steps.push({
+                graph, color: [...color], hl: v, tryColor: c, V, m, state: 'trying',
+                desc: `Trying color ${c} for Vertex ${v}`, explain: `Checking if color ${c} is safe for vertex ${v}.`
+              });
+
+              if (isSafe(v, c)) {
+                color[v] = c;
+                steps.push({
+                  graph, color: [...color], hl: v, V, m, state: 'safe',
+                  desc: `Assigned Color ${c}`, explain: `Color ${c} is safe. Moving to next vertex.`
+                });
+
+                if (solve(v + 1)) return true;
+
+                color[v] = 0;
+                steps.push({
+                  graph, color: [...color], hl: v, V, m, state: 'backtrack',
+                  desc: `Backtrack from Vertex ${v}`, explain: `No valid configuration found. Removing color ${c}.`
+                });
+              } else {
+                steps.push({
+                  graph, color: [...color], hl: v, tryColor: c, V, m, state: 'unsafe',
+                  desc: `Color ${c} Unsafe`, explain: `Adjacent vertex already has color ${c}.`
+                });
+              }
+            }
+            return false;
+          }
+
+          let solved = solve(0);
+          if (!solved) {
+            steps.push({ graph, color: [...color], V, m, desc: 'Finished', explain: `Cannot be colored with ${m} colors.` });
+          }
+          return steps;
+        },
+        render(s) {
+          const palette = ['var(--bg4)', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#a855f7', '#06b6d4'];
+
+          let html = '<div style="position:relative; width:100%; height:250px; display:flex; justify-content:center; align-items:center;">';
+
+          let nodes = [];
+          let cx = 200, cy = 125, r = 80;
+          for (let i = 0; i < s.V; i++) {
+            let angle = (Math.PI * 2 * i) / s.V - Math.PI / 2;
+            nodes.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+          }
+
+          html += '<svg style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:400px; height:250px; z-index:1;">';
+          for (let i = 0; i < s.V; i++) {
+            for (let j = i + 1; j < s.V; j++) {
+              if (s.graph[i][j] === 1) {
+                html += `<line x1="${nodes[i].x}" y1="${nodes[i].y}" x2="${nodes[j].x}" y2="${nodes[j].y}" stroke="var(--border)" stroke-width="2" />`;
+              }
+            }
+          }
+          html += '</svg>';
+
+          html += '<div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:400px; height:250px; z-index:2;">';
+          for (let i = 0; i < s.V; i++) {
+            let col = s.color[i];
+            let border = '2px solid var(--border2)';
+            let scale = '1';
+            let textCol = '#fff';
+
+            if (s.hl === i) {
+              if (s.state === 'trying') {
+                border = `4px dashed ${palette[s.tryColor]}`;
+                scale = '1.1';
+              } else if (s.state === 'safe') {
+                border = `4px solid ${palette[col]}`;
+                scale = '1.2';
+              } else if (s.state === 'unsafe') {
+                border = '4px solid #ef4444';
+              } else if (s.state === 'backtrack') {
+                border = '4px solid #ef4444';
+              }
+            }
+
+            html += `
+               <div style="
+                 position:absolute;
+                 left:${nodes[i].x - 20}px; top:${nodes[i].y - 20}px;
+                 width:40px; height:40px; 
+                 border-radius:50%; 
+                 background:${palette[col]}; 
+                 border:${border};
+                 display:flex; align-items:center; justify-content:center;
+                 font-weight:bold; font-size:16px; color:${textCol};
+                 transition:all 0.3s;
+                 transform:scale(${scale});
+               ">${i}</div>
+             `;
+          }
+          html += '</div></div>';
+          return html;
+        }
+      },
+      tsp: {
+        name: 'Travelling Salesperson', tag: '🟣 Backtracking',
+        desc: 'Find the shortest possible route that visits every city exactly once and returns to the origin city.',
+        complexity: [{ l: 'Time', v: 'O(N!)' }, { l: 'Space', v: 'O(N)' }],
+        problem: 'Given a set of cities and the distance between every pair of cities, find the shortest possible route that visits every city exactly once and returns to the starting point.',
+        approach: ['Start from city 0', 'At each step, try going to an unvisited city', 'Add the distance to current cost', 'If all cities visited, add cost to return to city 0', 'Update minimum cost if current total cost is smaller', 'Backtrack and try other paths'],
+        pseudo: `function solveTSP(currCity, count, cost):
+  if count == N and graph[currCity][0] > 0:
+    minCost = min(minCost, cost + graph[currCity][0])
+    return
+
+  for nextCity from 0 to N-1:
+    if not visited[nextCity] and graph[currCity][nextCity] > 0:
+      visited[nextCity] = True
+      solveTSP(nextCity, count + 1, cost + graph[currCity][nextCity])
+      visited[nextCity] = False // backtrack`,
+        codes: {
+          cpp: `int tsp(int graph[][4], vector<bool>& v, int currPos, int n, int count, int cost, int& ans) {
+    if (count == n && graph[currPos][0]) {
+        ans = min(ans, cost + graph[currPos][0]);
+        return ans;
+    }
+    for (int i = 0; i < n; i++) {
+        if (!v[i] && graph[currPos][i]) {
+            v[i] = true;
+            tsp(graph, v, i, n, count + 1, cost + graph[currPos][i], ans);
+            v[i] = false;
+        }
+    }
+    return ans;
+}`,
+          py: `def tsp(graph, v, currPos, n, count, cost, ans):
+    if count == n and graph[currPos][0]:
+        ans[0] = min(ans[0], cost + graph[currPos][0])
+        return ans[0]
+
+    for i in range(n):
+        if not v[i] and graph[currPos][i]:
+            v[i] = True
+            tsp(graph, v, i, n, count + 1, cost + graph[currPos][i], ans)
+            v[i] = False
+    return ans[0]`,
+          js: `function tsp(graph, visited, currPos, n, count, cost, minCost) {
+    if (count === n && graph[currPos][0] > 0) {
+        minCost.val = Math.min(minCost.val, cost + graph[currPos][0]);
+        return;
+    }
+    for (let i = 0; i < n; i++) {
+        if (!visited[i] && graph[currPos][i] > 0) {
+            visited[i] = true;
+            tsp(graph, visited, i, n, count + 1, cost + graph[currPos][i], minCost);
+            visited[i] = false;
+        }
+    }
+}`
+        },
+        inputs: `
+          <div class="field" style="align-items:flex-start;">
+            <div>
+              <label style="display:block; margin-bottom:5px;">Cities (N)</label>
+              <input id="tsp-n" type="number" min="2" max="6" value="4" style="width:60px; margin-bottom:10px;">
+              <br>
+              <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+            </div>
+            <div style="margin-left:15px;">
+              <label style="display:block; margin-bottom:5px;">Distance Matrix (comma/space separated)</label>
+              <textarea id="tsp-dist" rows="4" style="width:200px; font-family:monospace; font-size:12px;">0 10 15 20
+10 0 35 25
+15 35 0 30
+20 25 30 0</textarea>
+            </div>
+          </div>
+        `,
+        genSteps() {
+          let N = parseInt(document.getElementById('tsp-n').value);
+          if (isNaN(N) || N < 2) N = 4;
+
+          let distStr = document.getElementById('tsp-dist').value.trim();
+          let lines = distStr.split(/\r?\n|\\n/).filter(l => l.trim() !== '');
+          let dist = [];
+
+          for (let i = 0; i < N; i++) {
+            if (i < lines.length) {
+              let row = lines[i].split(/[, \\t]+/).filter(x => x !== '').map(Number);
+              while (row.length < N) row.push(0);
+              dist.push(row.slice(0, N));
+            } else {
+              dist.push(Array(N).fill(0));
+            }
+          }
+
+          let visited = Array(N).fill(false);
+          let path = [0];
+          visited[0] = true;
+
+          let minCost = Infinity;
+          let bestPath = [];
+
+          let steps = [];
+          steps.push({ dist, path: [...path], visited: [...visited], N, minCost, cost: 0, desc: 'Initial State', explain: 'Start at City A (0)' });
+
+          function solve(currPos, count, cost) {
+            if (count === N && dist[currPos][0] > 0) {
+              let totalCost = cost + dist[currPos][0];
+              let newPath = [...path, 0];
+
+              if (totalCost < minCost) {
+                minCost = totalCost;
+                bestPath = [...newPath];
+                steps.push({ dist, path: [...newPath], hlEdge: [currPos, 0], visited: [...visited], N, minCost, bestPath: [...bestPath], cost: totalCost, state: 'new_best', desc: `Complete Tour`, explain: `Found better route! Cost: ${totalCost}` });
+              } else {
+                steps.push({ dist, path: [...newPath], hlEdge: [currPos, 0], visited: [...visited], N, minCost, bestPath: [...bestPath], cost: totalCost, state: 'not_best', desc: `Complete Tour`, explain: `Cost ${totalCost} is not better than ${minCost}` });
+              }
+              return;
+            }
+
+            for (let i = 0; i < N; i++) {
+              if (!visited[i] && dist[currPos][i] > 0) {
+                visited[i] = true;
+                path.push(i);
+
+                let currc = cost + dist[currPos][i];
+                steps.push({ dist, path: [...path], hlEdge: [currPos, i], visited: [...visited], N, minCost, bestPath: [...bestPath], cost: currc, state: 'forward', desc: `Visit City ${String.fromCharCode(65 + i)}`, explain: `Move from ${String.fromCharCode(65 + currPos)} to ${String.fromCharCode(65 + i)}. Cost: ${cost} + ${dist[currPos][i]} = ${currc}` });
+
+                solve(i, count + 1, currc);
+
+                visited[i] = false;
+                path.pop();
+
+                steps.push({ dist, path: [...path], hlEdge: [currPos, i], visited: [...visited], N, minCost, bestPath: [...bestPath], cost, state: 'backtrack', desc: `Backtrack`, explain: `Remove ${String.fromCharCode(65 + i)} from path. Go back to ${String.fromCharCode(65 + currPos)}` });
+              }
+            }
+          }
+
+          solve(0, 1, 0);
+
+          if (minCost === Infinity) {
+            steps.push({ dist, path: [], N, minCost, bestPath: [], cost: 0, state: 'finished', desc: 'Finished', explain: 'Not Possible! No valid tour found.' });
+          } else {
+            steps.push({ dist, path: [...bestPath], N, minCost, bestPath: [...bestPath], cost: minCost, state: 'finished', desc: 'Finished', explain: `Best path cost: ${minCost}` });
+          }
+
+          return steps;
+        },
+        render(s) {
+          let html = '<div style="display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:30px; width:100%;">';
+
+          // --- Draw Matrix ---
+          html += '<div><h4 style="color:var(--t2); margin-bottom:10px; text-align:center;">Distance Matrix</h4><table style="border-collapse:collapse; background:var(--bg2); border:1px solid var(--border); font-size:13px;">';
+
+          html += '<tr><th style="padding:6px; border:1px solid var(--border); color:var(--t3);"></th>';
+          for (let i = 0; i < s.N; i++) html += `<th style="padding:6px; border:1px solid var(--border); color:var(--t3);">${String.fromCharCode(65 + i)}</th>`;
+          html += '</tr>';
+
+          for (let i = 0; i < s.N; i++) {
+            html += `<tr><th style="padding:6px; border:1px solid var(--border); color:var(--t3);">${String.fromCharCode(65 + i)}</th>`;
+            for (let j = 0; j < s.N; j++) {
+              let bg = 'transparent';
+              let col = 'var(--t1)';
+
+              if (s.hlEdge && s.hlEdge[0] === i && s.hlEdge[1] === j) {
+                if (s.state === 'backtrack') {
+                  bg = 'rgba(244,63,94,0.3)'; col = 'var(--rose)';
+                } else {
+                  bg = 'rgba(59,130,246,0.3)'; col = 'var(--blue)';
+                }
+              } else if (s.state === 'new_best' || s.state === 'finished') {
+                if (s.bestPath && s.bestPath.length > 0) {
+                  for (let k = 0; k < s.bestPath.length - 1; k++) {
+                    if (s.bestPath[k] === i && s.bestPath[k + 1] === j) {
+                      bg = 'rgba(16,185,129,0.2)'; col = 'var(--green)';
+                    }
+                  }
+                }
+              }
+
+              let val = (i === j) ? '0' : (s.dist[i][j] === 0 ? '∞' : s.dist[i][j]);
+              html += `<td style="padding:6px 10px; border:1px solid var(--border); text-align:center; background:${bg}; color:${col};">${val}</td>`;
+            }
+            html += '</tr>';
+          }
+          html += '</table></div>';
+
+          // --- Draw Graph ---
+          html += '<div style="position:relative; width:350px; height:250px;">';
+
+          let nodes = [];
+          let cx = 175, cy = 125, r = 80;
+          for (let i = 0; i < s.N; i++) {
+            let angle = (Math.PI * 2 * i) / s.N - Math.PI / 2;
+            nodes.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+          }
+
+          html += '<svg style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1;">';
+
+          if (s.path && s.path.length > 1) {
+            for (let i = 0; i < s.path.length - 1; i++) {
+              let u = s.path[i], v = s.path[i + 1];
+              let stroke = 'var(--blue)';
+              let strokeWidth = "3";
+              let dash = "none";
+
+              if (s.state === 'new_best' || s.state === 'finished') stroke = 'var(--green)';
+              if (s.state === 'not_best') { stroke = 'var(--t3)'; strokeWidth = "2"; dash = "5,5"; }
+
+              html += `<line x1="${nodes[u].x}" y1="${nodes[u].y}" x2="${nodes[v].x}" y2="${nodes[v].y}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-dasharray="${dash}" />`;
+
+              let mx = (nodes[u].x + nodes[v].x) / 2;
+              let my = (nodes[u].y + nodes[v].y) / 2;
+              html += `<text x="${mx}" y="${my - 5}" fill="var(--t2)" font-size="12" text-anchor="middle" font-weight="bold">${s.dist[u][v]}</text>`;
+            }
+          }
+
+          if (s.state === 'backtrack' && s.hlEdge) {
+            let u = s.hlEdge[0], v = s.hlEdge[1];
+            html += `<line x1="${nodes[u].x}" y1="${nodes[u].y}" x2="${nodes[v].x}" y2="${nodes[v].y}" stroke="var(--rose)" stroke-width="3" stroke-dasharray="5,5" />`;
+          }
+          html += '</svg>';
+
+          html += '<div style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:2;">';
+          for (let i = 0; i < s.N; i++) {
+            let bg = s.visited && s.visited[i] ? 'var(--purple)' : 'var(--bg4)';
+            if (s.state === 'finished' || s.state === 'new_best') {
+              bg = (s.bestPath && s.bestPath.includes(i)) ? 'var(--green)' : 'var(--bg4)';
+            }
+
+            let bdr = s.path && s.path[s.path.length - 1] === i ? 'var(--cc)' : 'var(--border2)';
+
+            html += `
+               <div style="
+                 position:absolute;
+                 left:${nodes[i].x - 20}px; top:${nodes[i].y - 20}px;
+                 width:40px; height:40px; 
+                 border-radius:50%; 
+                 background:${bg}; 
+                 border:3px solid ${bdr};
+                 display:flex; align-items:center; justify-content:center;
+                 font-weight:bold; font-size:16px; color:#fff;
+                 transition:all 0.3s;
+               ">${String.fromCharCode(65 + i)}</div>
+             `;
+          }
+          html += '</div></div>';
+
+          // --- Info Box ---
+          let minDisp = s.minCost === Infinity ? 'Not Possible' : s.minCost;
+          html += `<div style="position:absolute; top:10px; right:10px; text-align:right; font-size:14px; background:var(--bg3); padding:10px; border-radius:8px; border:1px solid var(--border); box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+            <div style="color:var(--t3); margin-bottom:5px;">Current Cost: <span style="color:var(--t1);font-weight:bold;">${s.cost}</span></div>
+            <div style="color:var(--t3)">Min Cost: <span style="color:var(--green);font-weight:bold;">${minDisp}</span></div>
+          </div>`;
+
+          html += '</div>';
+          return html;
+        }
+      }
+    };
+
+    let current = 'nQueens', steps = [], stepIdx = 0, playing = false, timer = null, currentLang = 'cpp';
+
+    function selectAlgo(id) {
+      current = id;
+      document.querySelectorAll('.algo-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + id).classList.add('active');
+      const A = ALGOS[id];
+      document.getElementById('bc-algo').textContent = A.name;
+      document.getElementById('algo-tag').textContent = A.tag;
+      document.getElementById('algo-title').textContent = A.name;
+      document.getElementById('algo-desc').textContent = A.desc;
+      document.getElementById('input-container').innerHTML = A.inputs;
+      resetAlgo(); loadExplain(); loadCode();
+    }
+
+    function loadExplain() {
+      const A = ALGOS[current];
+      document.getElementById('exp-problem').textContent = A.problem;
+      document.getElementById('exp-approach').innerHTML = A.approach.map(s => `<li>${s}</li>`).join('');
+      document.getElementById('exp-pseudo').textContent = A.pseudo;
+    }
+
+    function loadCode() {
+      const A = ALGOS[current];
+      document.getElementById('code-display').textContent = A.codes[currentLang] || '';
+    }
+
+    function showLang(l) {
+      currentLang = l;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      loadCode();
+    }
+
+    function showTab(t) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + t).classList.add('active');
+    }
+
+    function initAlgo() {
+      steps = ALGOS[current].genSteps();
+      stepIdx = 0;
+      updateComplexity();
+      renderStep();
+      setStatus('ready');
+    }
+
+    function updateComplexity() {
+      const c = ALGOS[current].complexity;
+      document.getElementById('complexity-grid').innerHTML = c.map(x => `<div class="complexity-item"><div class="complexity-label">${x.l}</div><div class="complexity-value">${x.v}</div></div>`).join('');
+    }
+
+    function renderStep() {
+      if (!steps.length) return;
+      const s = steps[Math.min(stepIdx, steps.length - 1)];
+      document.getElementById('viz-label').textContent = `Step ${stepIdx + 1} / ${steps.length}`;
+      document.getElementById('step-counter').textContent = `Step ${stepIdx + 1} / ${steps.length}`;
+      document.getElementById('viz-area').innerHTML = ALGOS[current].render(s);
+      updateTrace(s);
+    }
+
+    function updateTrace(s) {
+      const list = document.getElementById('trace-list');
+      const item = document.createElement('div');
+      item.className = 'trace-item current fade-in';
+      item.innerHTML = `<div>${s.desc}</div><div class="trace-explain">${s.explain}</div>`;
+      const prev = list.querySelector('.current');
+      if (prev) prev.className = 'trace-item done';
+      list.prepend(item);
+      while (list.children.length > 8) list.removeChild(list.lastChild);
+    }
+
+    function nextStep() {
+      if (stepIdx < steps.length - 1) { stepIdx++; renderStep(); }
+      else { stopPlay(); setStatus('done'); }
+    }
+
+    function prevStep() { stopPlay(); if (stepIdx > 0) { stepIdx--; renderStep(); } }
+
+    function togglePlay() {
+      if (playing) stopPlay();
+      else startPlay();
+    }
+
+    function startPlay() {
+      if (!steps.length) { initAlgo(); return; }
+      playing = true;
+      document.getElementById('play-btn').textContent = '⏸';
+      document.getElementById('status-dot').className = 'status-dot running';
+      document.getElementById('status-text').textContent = 'Running...';
+      function tick() {
+        if (stepIdx >= steps.length - 1) { stopPlay(); setStatus('done'); return; }
+        stepIdx++; renderStep();
+        const spd = parseInt(document.getElementById('speed').value);
+        timer = setTimeout(tick, 1100 - spd * 100);
+      }
+      tick();
+    }
+
+    function stopPlay() {
+      playing = false;
+      clearTimeout(timer);
+      document.getElementById('play-btn').textContent = '▶';
+      if (document.getElementById('status-dot').className.includes('running'))
+        setStatus('ready');
+    }
+
+    function resetAlgo() {
+      stopPlay(); steps = []; stepIdx = 0;
+      document.getElementById('viz-area').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--t3);font-size:14px">Enter input and click Visualize</div>';
+      document.getElementById('trace-list').innerHTML = '';
+      document.getElementById('step-counter').textContent = 'Step 0 / 0';
+      document.getElementById('viz-label').textContent = 'Visualization';
+      setStatus('idle');
+    }
+
+    function setStatus(s) {
+      const dot = document.getElementById('status-dot');
+      const txt = document.getElementById('status-text');
+      if (s === 'idle') { dot.className = 'status-dot idle'; txt.textContent = 'Ready — click Visualize to start'; }
+      else if (s === 'ready') { dot.className = 'status-dot'; txt.textContent = 'Steps generated — use controls to navigate'; }
+      else if (s === 'done') { dot.className = 'status-dot'; txt.textContent = '✅ Algorithm complete!'; }
+    }
+
+    document.getElementById('speed').addEventListener('input', function () {
+      document.getElementById('speed-val').textContent = this.value + 'x';
+    });
+
+    selectAlgo('nQueens');
+  </script>
+</body>
+
+</html>

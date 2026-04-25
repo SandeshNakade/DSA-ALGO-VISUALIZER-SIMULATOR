@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Dynamic Programming | ALGO Visualizer</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --accent: var(--amber);
+      --accent-g: rgba(245, 158, 11, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-grid"></div>
+  <div class="orb orb1" style="background:rgba(245,158,11,0.12)"></div>
+  <div class="orb orb2" style="background:rgba(245,158,11,0.08)"></div>
+
+  <header class="app-header">
+    <a class="logo" href="index.html">
+      <div class="logo-icon">⚡</div><span class="logo-name">ALGO Visualizer</span>
+    </a>
+    <div class="breadcrumb">
+      <a class="bc-link" href="index.html">Home</a>
+      <span class="bc-sep">/</span>
+      <span class="bc-cat" style="color:var(--amber)">Dynamic Programming</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current" id="bc-algo">0/1 Knapsack</span>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-head">Algorithms</div>
+      <button class="algo-btn active" onclick="selectAlgo('knapsack01')" id="btn-knapsack01"><span
+          class="algo-dot"></span>0/1 Knapsack</button>
+      <button class="algo-btn" onclick="selectAlgo('coinChange')" id="btn-coinChange"><span class="algo-dot"></span>Coin
+        Change</button>
+      <button class="algo-btn" onclick="selectAlgo('lcs')" id="btn-lcs"><span class="algo-dot"></span>LCS
+        (Subsequence)</button>
+    </aside>
+
+    <div class="main-panel">
+      <div class="algo-header">
+        <div class="algo-tag" id="algo-tag">🟡 Dynamic Programming</div>
+        <div class="algo-title" id="algo-title">0/1 Knapsack</div>
+        <div class="algo-desc" id="algo-desc"></div>
+      </div>
+
+      <div class="tabs-bar">
+        <button class="tab-btn active" onclick="showTab('visualizer')">🎬 Visualizer</button>
+        <button class="tab-btn" onclick="showTab('explanation')">📖 Explanation</button>
+        <button class="tab-btn" onclick="showTab('code')">💻 Code</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-visualizer">
+        <div class="input-card">
+          <div class="card-label">Input</div>
+          <div class="input-row" id="input-container">
+            <!-- Dynamic Input -->
+          </div>
+        </div>
+
+        <div class="viz-card">
+          <div class="card-label" id="viz-label">Visualization</div>
+          <div id="viz-area" style="min-height:220px;display:flex;justify-content:center;align-items:center;"></div>
+        </div>
+
+        <div class="controls-card">
+          <div class="controls-row">
+            <button class="ctrl-btn" onclick="prevStep()">⏮</button>
+            <button class="ctrl-btn play-btn" id="play-btn" onclick="togglePlay()">▶</button>
+            <button class="ctrl-btn" onclick="nextStep()">⏭</button>
+            <button class="ctrl-btn" onclick="resetAlgo()">🔄</button>
+            <span class="step-counter" id="step-counter">Step 0 / 0</span>
+            <div class="speed-wrap">
+              <span class="speed-label">Speed</span>
+              <input class="speed-input" type="range" id="speed" min="1" max="10" value="7">
+              <span class="speed-label" id="speed-val">7x</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="trace-card">
+          <div class="card-label">Step Trace</div>
+          <div id="trace-list"></div>
+        </div>
+
+        <div class="complexity-card">
+          <div class="card-label">Complexity Analysis</div>
+          <div class="complexity-grid" id="complexity-grid"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-explanation">
+        <div class="explain-section">
+          <h3>Problem</h3>
+          <p id="exp-problem"></p>
+        </div>
+        <div class="explain-section">
+          <h3>Approach</h3>
+          <ul id="exp-approach"></ul>
+        </div>
+        <div class="explain-section">
+          <h3>Pseudocode</h3>
+          <div class="pseudo-block" id="exp-pseudo"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-code">
+        <div class="lang-tabs">
+          <button class="lang-btn active" onclick="showLang('cpp')">C++</button>
+          <button class="lang-btn" onclick="showLang('py')">Python</button>
+          <button class="lang-btn" onclick="showLang('js')">JavaScript</button>
+        </div>
+        <div class="code-block" id="code-display"></div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-dot idle" id="status-dot"></div><span id="status-text">Ready — click Visualize to
+          start</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ALGOS = {
+      knapsack01: {
+        name: '0/1 Knapsack', tag: '🟡 Dynamic Programming',
+        desc: 'Finds the maximum value that can be put in a knapsack of capacity W. An item can either be taken entirely or left.',
+        complexity: [{ l: 'Time', v: 'O(n * W)' }, { l: 'Space', v: 'O(n * W)' }],
+        problem: 'Given weights and values of n items, find the maximum value you can achieve with a knapsack of capacity W.',
+        approach: ['Create a DP table where rows are items and columns are capacities from 0 to W', 'For each cell (i, j), if current item weight <= j, max(include item, exclude item)', 'Include: value[i] + dp[i-1][j-weight[i]]', 'Exclude: dp[i-1][j]'],
+        pseudo: `dp[n+1][W+1] initialized to 0
+for i from 1 to n:
+  for w from 0 to W:
+    if weight[i-1] <= w:
+      dp[i][w] = max(value[i-1] + dp[i-1][w-weight[i-1]], dp[i-1][w])
+    else:
+      dp[i][w] = dp[i-1][w]
+return dp[n][W]`,
+        codes: {
+          cpp: `int knapSack(int W, vector<int>& wt, vector<int>& val, int n) {
+    vector<vector<int>> dp(n + 1, vector<int>(W + 1, 0));
+    for (int i = 1; i <= n; i++) {
+        for (int w = 0; w <= W; w++) {
+            if (wt[i - 1] <= w)
+                dp[i][w] = max(val[i - 1] + dp[i - 1][w - wt[i - 1]], dp[i - 1][w]);
+            else
+                dp[i][w] = dp[i - 1][w];
+        }
+    }
+    return dp[n][W];
+}`,
+          py: `def knapsack(W, wt, val, n):
+    dp = [[0 for x in range(W + 1)] for x in range(n + 1)]
+    for i in range(1, n + 1):
+        for w in range(W + 1):
+            if wt[i-1] <= w:
+                dp[i][w] = max(val[i-1] + dp[i-1][w-wt[i-1]],  dp[i-1][w])
+            else:
+                dp[i][w] = dp[i-1][w]
+    return dp[n][W]`,
+          js: `function knapSack(W, wt, val, n) {
+    let dp = Array(n + 1).fill().map(() => Array(W + 1).fill(0));
+    for (let i = 1; i <= n; i++) {
+        for (let w = 0; w <= W; w++) {
+            if (wt[i - 1] <= w) {
+                dp[i][w] = Math.max(val[i - 1] + dp[i - 1][w - wt[i - 1]], dp[i - 1][w]);
+            } else {
+                dp[i][w] = dp[i - 1][w];
+            }
+        }
+    }
+    return dp[n][W];
+}`
+        },
+        inputs: `
+          <div class="field"><label>Values</label><input id="kp-val" value="60,100,120"></div>
+          <div class="field"><label>Weights</label><input id="kp-wt" value="10,20,30"></div>
+          <div class="field"><label>Capacity</label><input id="kp-cap" value="50" style="width:80px"></div>
+          <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+        `,
+        genSteps() {
+          const val = document.getElementById('kp-val').value.split(',').map(Number);
+          const wt = document.getElementById('kp-wt').value.split(',').map(Number);
+          const W = Number(document.getElementById('kp-cap').value);
+          const n = val.length;
+
+          let dp = Array(n + 1).fill().map(() => Array(W + 1).fill(''));
+          for (let i = 0; i <= n; i++) dp[i][0] = 0;
+          for (let w = 0; w <= W; w++) dp[0][w] = 0;
+
+          let steps = [];
+          steps.push({ dp: JSON.parse(JSON.stringify(dp)), val, wt, W, n, desc: 'Initialize DP table', explain: 'Base cases: 0 items or 0 capacity gives 0 value.' });
+
+          for (let i = 1; i <= n; i++) {
+            for (let w = 1; w <= W; w++) {
+              let hl = [[i, w]];
+              let lookup = [[i - 1, w]];
+
+              if (wt[i - 1] <= w) {
+                let take = val[i - 1] + dp[i - 1][w - wt[i - 1]];
+                let leave = dp[i - 1][w];
+                lookup.push([i - 1, w - wt[i - 1]]);
+
+                dp[i][w] = Math.max(take, leave);
+                steps.push({
+                  dp: JSON.parse(JSON.stringify(dp)), hl, lookup, val, wt, W, n,
+                  desc: `Checking Item ${i} (v:${val[i - 1]}, w:${wt[i - 1]}) at Cap ${w}`,
+                  explain: `Max(Take: ${val[i - 1]} + dp[${i - 1}][${w - wt[i - 1]}]=${take}, Leave: dp[${i - 1}][${w}]=${leave}) -> ${dp[i][w]}`
+                });
+              } else {
+                dp[i][w] = dp[i - 1][w];
+                steps.push({
+                  dp: JSON.parse(JSON.stringify(dp)), hl, lookup, val, wt, W, n,
+                  desc: `Checking Item ${i} (v:${val[i - 1]}, w:${wt[i - 1]}) at Cap ${w}`,
+                  explain: `Item too heavy (${wt[i - 1]} > ${w}). Must leave it. -> ${dp[i][w]}`
+                });
+              }
+            }
+          }
+          steps.push({ dp: JSON.parse(JSON.stringify(dp)), val, wt, W, n, desc: 'Finished', explain: `Max value is ${dp[n][W]}` });
+          return steps;
+        },
+        render(s) {
+          let html = '<div class="dp-table-wrap"><table class="dp-table">';
+          html += '<tr><th>Item \\ Cap</th>';
+          for (let w = 0; w <= s.W; w++) html += `<th>${w}</th>`;
+          html += '</tr>';
+
+          for (let i = 0; i <= s.n; i++) {
+            html += `<tr><th>${i === 0 ? '0' : `Item ${i}<br><span style="font-size:9px">(v:${s.val[i - 1]}, w:${s.wt[i - 1]})</span>`}</th>`;
+            for (let w = 0; w <= s.W; w++) {
+              let cls = '';
+              if (s.dp[i][w] !== '') cls = 'filled';
+              if (s.lookup && s.lookup.some(pos => pos[0] === i && pos[1] === w)) cls = 'lookup';
+              if (s.hl && s.hl.some(pos => pos[0] === i && pos[1] === w)) cls = 'current';
+              html += `<td class="${cls}">${s.dp[i][w]}</td>`;
+            }
+            html += '</tr>';
+          }
+          html += '</table></div>';
+          return html;
+        }
+      },
+      coinChange: {
+        name: 'Coin Change', tag: '🟡 Dynamic Programming',
+        desc: 'Finds the minimum number of coins needed to make a given amount.',
+        complexity: [{ l: 'Time', v: 'O(n * amount)' }, { l: 'Space', v: 'O(amount)' }],
+        problem: 'Given an array of coin denominations and an amount, find the min coins to make that amount.',
+        approach: ['Initialize DP array of size (amount + 1) to Infinity', 'dp[0] = 0 (0 coins for 0 amount)', 'For each coin, update dp[i] = min(dp[i], dp[i - coin] + 1)'],
+        pseudo: `dp = array of size amount + 1, filled with Infinity
+dp[0] = 0
+for coin in coins:
+  for i from coin to amount:
+    dp[i] = min(dp[i], dp[i - coin] + 1)
+return dp[amount] if dp[amount] != Infinity else -1`,
+        codes: {
+          cpp: `int coinChange(vector<int>& coins, int amount) {
+    vector<int> dp(amount + 1, amount + 1);
+    dp[0] = 0;
+    for (int coin : coins) {
+        for (int i = coin; i <= amount; i++) {
+            dp[i] = min(dp[i], dp[i - coin] + 1);
+        }
+    }
+    return dp[amount] > amount ? -1 : dp[amount];
+}`,
+          py: `def coinChange(coins, amount):
+    dp = [float('inf')] * (amount + 1)
+    dp[0] = 0
+    for coin in coins:
+        for i in range(coin, amount + 1):
+            dp[i] = min(dp[i], dp[i - coin] + 1)
+    return dp[amount] if dp[amount] != float('inf') else -1`,
+          js: `function coinChange(coins, amount) {
+    let dp = Array(amount + 1).fill(Infinity);
+    dp[0] = 0;
+    for (let coin of coins) {
+        for (let i = coin; i <= amount; i++) {
+            dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+        }
+    }
+    return dp[amount] === Infinity ? -1 : dp[amount];
+}`
+        },
+        inputs: `
+          <div class="field"><label>Coins</label><input id="cc-coins" value="1,2,5"></div>
+          <div class="field"><label>Amount</label><input id="cc-amt" value="11" style="width:80px"></div>
+          <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+        `,
+        genSteps() {
+          const coins = document.getElementById('cc-coins').value.split(',').map(Number);
+          const amount = Number(document.getElementById('cc-amt').value);
+
+          let dp = Array(amount + 1).fill('∞');
+          dp[0] = 0;
+          let steps = [];
+          steps.push({ dp: [...dp], coins, amount, desc: 'Initialize DP array', explain: 'dp[0] = 0, rest = ∞' });
+
+          for (let coin of coins) {
+            steps.push({ dp: [...dp], hlCoin: coin, coins, amount, desc: `Using coin: ${coin}`, explain: `Now considering coin ${coin}` });
+            for (let i = coin; i <= amount; i++) {
+              let prev = dp[i] === '∞' ? Infinity : dp[i];
+              let cand = dp[i - coin] === '∞' ? Infinity : dp[i - coin] + 1;
+
+              let changed = false;
+              if (cand < prev) {
+                dp[i] = cand;
+                changed = true;
+              }
+
+              steps.push({
+                dp: [...dp], hl: i, lookup: i - coin, hlCoin: coin, coins, amount,
+                desc: `Checking amount ${i}`,
+                explain: changed ? `Updated dp[${i}] to ${cand} (dp[${i - coin}] + 1)` : `Kept dp[${i}] = ${dp[i]} (cand: ${cand === Infinity ? '∞' : cand})`
+              });
+            }
+          }
+          let finalRes = dp[amount] === '∞' ? -1 : dp[amount];
+          steps.push({ dp: [...dp], coins, amount, desc: 'Finished', explain: `Minimum coins needed: ${finalRes}` });
+          return steps;
+        },
+        render(s) {
+          let html = '<div style="margin-bottom:20px;display:flex;gap:10px;justify-content:center;">';
+          s.coins.forEach(c => {
+            html += `<div class="item-box ${s.hlCoin === c ? 'taken' : ''}" style="padding:10px;font-size:16px;">Coin ${c}</div>`;
+          });
+          html += '</div>';
+
+          html += '<div class="dp-table-wrap"><table class="dp-table">';
+          html += '<tr><th>Amt</th>';
+          for (let i = 0; i <= s.amount; i++) html += `<th>${i}</th>`;
+          html += '</tr><tr><th>Coins</th>';
+          for (let i = 0; i <= s.amount; i++) {
+            let cls = 'filled';
+            if (s.dp[i] === '∞') cls = '';
+            if (s.lookup === i) cls = 'lookup';
+            if (s.hl === i) cls = 'current';
+            html += `<td class="${cls}">${s.dp[i]}</td>`;
+          }
+          html += '</tr></table></div>';
+          return html;
+        }
+      },
+      lcs: {
+        name: 'Longest Common Subsequence', tag: '🟡 Dynamic Programming',
+        desc: 'Finds the longest subsequence present in both strings in the same order.',
+        complexity: [{ l: 'Time', v: 'O(m*n)' }, { l: 'Space', v: 'O(m*n)' }],
+        problem: 'Given two strings, find the length of their longest common subsequence (LCS).',
+        approach: ['Create a 2D DP table for lengths of two strings', 'If chars match: dp[i][j] = 1 + dp[i-1][j-1]', 'If they dont match: dp[i][j] = max(dp[i-1][j], dp[i][j-1])'],
+        pseudo: `dp[m+1][n+1] initialized to 0
+for i from 1 to m:
+  for j from 1 to n:
+    if str1[i-1] == str2[j-1]:
+      dp[i][j] = dp[i-1][j-1] + 1
+    else:
+      dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+return dp[m][n]`,
+        codes: {
+          cpp: `int longestCommonSubsequence(string text1, string text2) {
+    int m = text1.length(), n = text2.length();
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (text1[i - 1] == text2[j - 1])
+                dp[i][j] = 1 + dp[i - 1][j - 1];
+            else
+                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+        }
+    }
+    return dp[m][n];
+}`,
+          py: `def longestCommonSubsequence(text1, text2):
+    m, n = len(text1), len(text2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if text1[i - 1] == text2[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1] + 1
+            else:
+                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
+    return dp[m][n]`,
+          js: `function longestCommonSubsequence(text1, text2) {
+    const m = text1.length, n = text2.length;
+    const dp = Array.from({length: m + 1}, () => Array(n + 1).fill(0));
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            if (text1[i - 1] === text2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+    return dp[m][n];
+}`
+        },
+        inputs: `
+          <div class="field"><label>String 1</label><input id="lcs-s1" value="AGGTAB"></div>
+          <div class="field"><label>String 2</label><input id="lcs-s2" value="GXTXAYB"></div>
+          <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+        `,
+        genSteps() {
+          const s1 = document.getElementById('lcs-s1').value;
+          const s2 = document.getElementById('lcs-s2').value;
+          const m = s1.length, n = s2.length;
+
+          let dp = Array(m + 1).fill().map(() => Array(n + 1).fill(''));
+          for (let i = 0; i <= m; i++) dp[i][0] = 0;
+          for (let j = 0; j <= n; j++) dp[0][j] = 0;
+
+          let steps = [];
+          steps.push({ dp: JSON.parse(JSON.stringify(dp)), s1, s2, m, n, desc: 'Initialize DP table', explain: '1st row and 1st column are 0' });
+
+          for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+              let hl = [[i, j]];
+              let lookup = [];
+
+              if (s1[i - 1] === s2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+                lookup.push([i - 1, j - 1]);
+                steps.push({
+                  dp: JSON.parse(JSON.stringify(dp)), hl, lookup, s1, s2, m, n,
+                  desc: `Match at ${s1[i - 1]}`,
+                  explain: `Match! 1 + dp[${i - 1}][${j - 1}] -> ${dp[i][j]}`
+                });
+              } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                lookup.push([i - 1, j], [i, j - 1]);
+                steps.push({
+                  dp: JSON.parse(JSON.stringify(dp)), hl, lookup, s1, s2, m, n,
+                  desc: `Mismatch (${s1[i - 1]} ≠ ${s2[j - 1]})`,
+                  explain: `Max(dp[${i - 1}][${j}], dp[${i}][${j - 1}]) -> ${dp[i][j]}`
+                });
+              }
+            }
+          }
+
+          // Traceback for final path
+          let path = [];
+          let i = m, j = n;
+          while (i > 0 && j > 0) {
+            path.push([i, j]);
+            if (s1[i - 1] === s2[j - 1]) { i--; j--; }
+            else if (dp[i - 1][j] > dp[i][j - 1]) { i--; }
+            else { j--; }
+          }
+
+          steps.push({ dp: JSON.parse(JSON.stringify(dp)), traceback: path, s1, s2, m, n, desc: 'Finished', explain: `LCS length is ${dp[m][n]}` });
+          return steps;
+        },
+        render(s) {
+          let html = '<div class="dp-table-wrap"><table class="dp-table">';
+          html += '<tr><th></th><th></th>';
+          for (let j = 0; j < s.n; j++) html += `<th style="color:var(--amber)">${s.s2[j]}</th>`;
+          html += '</tr>';
+
+          for (let i = 0; i <= s.m; i++) {
+            html += '<tr>';
+            if (i === 0) html += '<th></th>';
+            else html += `<th style="color:var(--blue)">${s.s1[i - 1]}</th>`;
+
+            for (let j = 0; j <= s.n; j++) {
+              let cls = '';
+              if (s.dp[i][j] !== '') cls = 'filled';
+              if (s.lookup && s.lookup.some(pos => pos[0] === i && pos[1] === j)) cls = 'lookup';
+              if (s.hl && s.hl.some(pos => pos[0] === i && pos[1] === j)) cls = 'current';
+              if (s.traceback && s.traceback.some(pos => pos[0] === i && pos[1] === j)) cls = 'trace'; // purple class for final path
+
+              html += `<td class="${cls}">${s.dp[i][j]}</td>`;
+            }
+            html += '</tr>';
+          }
+          html += '</table></div>';
+          return html;
+        }
+      }
+    };
+
+    let current = 'knapsack01', steps = [], stepIdx = 0, playing = false, timer = null, currentLang = 'cpp';
+
+    function selectAlgo(id) {
+      current = id;
+      document.querySelectorAll('.algo-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + id).classList.add('active');
+      const A = ALGOS[id];
+      document.getElementById('bc-algo').textContent = A.name;
+      document.getElementById('algo-tag').textContent = A.tag;
+      document.getElementById('algo-title').textContent = A.name;
+      document.getElementById('algo-desc').textContent = A.desc;
+      document.getElementById('input-container').innerHTML = A.inputs;
+      resetAlgo(); loadExplain(); loadCode();
+    }
+
+    function loadExplain() {
+      const A = ALGOS[current];
+      document.getElementById('exp-problem').textContent = A.problem;
+      document.getElementById('exp-approach').innerHTML = A.approach.map(s => `<li>${s}</li>`).join('');
+      document.getElementById('exp-pseudo').textContent = A.pseudo;
+    }
+
+    function loadCode() {
+      const A = ALGOS[current];
+      document.getElementById('code-display').textContent = A.codes[currentLang] || '';
+    }
+
+    function showLang(l) {
+      currentLang = l;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      loadCode();
+    }
+
+    function showTab(t) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + t).classList.add('active');
+    }
+
+    function initAlgo() {
+      steps = ALGOS[current].genSteps();
+      stepIdx = 0;
+      updateComplexity();
+      renderStep();
+      setStatus('ready');
+    }
+
+    function updateComplexity() {
+      const c = ALGOS[current].complexity;
+      document.getElementById('complexity-grid').innerHTML = c.map(x => `<div class="complexity-item"><div class="complexity-label">${x.l}</div><div class="complexity-value">${x.v}</div></div>`).join('');
+    }
+
+    function renderStep() {
+      if (!steps.length) return;
+      const s = steps[Math.min(stepIdx, steps.length - 1)];
+      document.getElementById('viz-label').textContent = `Step ${stepIdx + 1} / ${steps.length}`;
+      document.getElementById('step-counter').textContent = `Step ${stepIdx + 1} / ${steps.length}`;
+      document.getElementById('viz-area').innerHTML = ALGOS[current].render(s);
+      updateTrace(s);
+    }
+
+    function updateTrace(s) {
+      const list = document.getElementById('trace-list');
+      const item = document.createElement('div');
+      item.className = 'trace-item current fade-in';
+      item.innerHTML = `<div>${s.desc}</div><div class="trace-explain">${s.explain}</div>`;
+      const prev = list.querySelector('.current');
+      if (prev) prev.className = 'trace-item done';
+      list.prepend(item);
+      while (list.children.length > 8) list.removeChild(list.lastChild);
+    }
+
+    function nextStep() {
+      if (stepIdx < steps.length - 1) { stepIdx++; renderStep(); }
+      else { stopPlay(); setStatus('done'); }
+    }
+
+    function prevStep() { stopPlay(); if (stepIdx > 0) { stepIdx--; renderStep(); } }
+
+    function togglePlay() {
+      if (playing) stopPlay();
+      else startPlay();
+    }
+
+    function startPlay() {
+      if (!steps.length) { initAlgo(); return; }
+      playing = true;
+      document.getElementById('play-btn').textContent = '⏸';
+      document.getElementById('status-dot').className = 'status-dot running';
+      document.getElementById('status-text').textContent = 'Running...';
+      function tick() {
+        if (stepIdx >= steps.length - 1) { stopPlay(); setStatus('done'); return; }
+        stepIdx++; renderStep();
+        const spd = parseInt(document.getElementById('speed').value);
+        timer = setTimeout(tick, 1100 - spd * 100);
+      }
+      tick();
+    }
+
+    function stopPlay() {
+      playing = false;
+      clearTimeout(timer);
+      document.getElementById('play-btn').textContent = '▶';
+      if (document.getElementById('status-dot').className.includes('running'))
+        setStatus('ready');
+    }
+
+    function resetAlgo() {
+      stopPlay(); steps = []; stepIdx = 0;
+      document.getElementById('viz-area').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--t3);font-size:14px">Enter input and click Visualize</div>';
+      document.getElementById('trace-list').innerHTML = '';
+      document.getElementById('step-counter').textContent = 'Step 0 / 0';
+      document.getElementById('viz-label').textContent = 'Visualization';
+      setStatus('idle');
+    }
+
+    function setStatus(s) {
+      const dot = document.getElementById('status-dot');
+      const txt = document.getElementById('status-text');
+      if (s === 'idle') { dot.className = 'status-dot idle'; txt.textContent = 'Ready — click Visualize to start'; }
+      else if (s === 'ready') { dot.className = 'status-dot'; txt.textContent = 'Steps generated — use controls to navigate'; }
+      else if (s === 'done') { dot.className = 'status-dot'; txt.textContent = '✅ Algorithm complete!'; }
+    }
+
+    document.getElementById('speed').addEventListener('input', function () {
+      document.getElementById('speed-val').textContent = this.value + 'x';
+    });
+
+    selectAlgo('knapsack01');
+  </script>
+</body>
+
+</html>

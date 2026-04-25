@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>ALGO Visualizer & Simulator | DSA Learning Platform</title>
+  <meta name="description"
+    content="Interactive DSA Algorithm Visualizer – step-by-step animations, custom inputs, complexity analysis for Sorting, DP, Backtracking, Greedy, and Data Structures.">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .home-hero {
+      text-align: center;
+      padding: 80px 24px 50px;
+      position: relative;
+      z-index: 1
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--blue);
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 24px
+    }
+
+    .hero-title {
+      font-size: clamp(38px, 7vw, 80px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2.5px;
+      margin-bottom: 20px
+    }
+
+    .hero-title .grad {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6, #f43f5e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--t2);
+      max-width: 580px;
+      margin: 0 auto 48px;
+      line-height: 1.7
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 60px;
+      flex-wrap: wrap
+    }
+
+    .stat {
+      text-align: center
+    }
+
+    .stat-val {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--t1)
+    }
+
+    .stat-lbl {
+      font-size: 12px;
+      color: var(--t3);
+      font-weight: 500;
+      margin-top: 2px
+    }
+
+    .cats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 0 40px 80px;
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1
+    }
+
+    .cat-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      padding: 28px 26px;
+      cursor: pointer;
+      transition: all .3s cubic-bezier(.4, 0, .2, 1);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      display: block
+    }
+
+    .cat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--cc);
+      opacity: 0;
+      transition: opacity .3s
+    }
+
+    .cat-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-5px);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 50px var(--cg)
+    }
+
+    .cat-card:hover::before {
+      opacity: 1
+    }
+
+    .cat-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 18px;
+      background: var(--cg)
+    }
+
+    .cat-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--t1);
+      margin-bottom: 8px
+    }
+
+    .cat-desc {
+      font-size: 13px;
+      color: var(--t2);
+      line-height: 1.6;
+      margin-bottom: 16px
+    }
+
+    .cat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px
+    }
+
+    .cat-chip {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: var(--cg);
+      color: var(--cc);
+      border: 1px solid var(--cg)
+    }
+
+    .cat-arrow {
+      position: absolute;
+      top: 22px;
+      right: 22px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--cg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      opacity: 0;
+      transition: all .3s;
+      color: var(--cc)
+    }
+
+    .cat-card:hover .cat-arrow {
+      opacity: 1;
+      transform: translateX(3px)
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--border)
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-grid"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <header>
+    <a class="logo" href="index.html">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-name">ALGO Visualizer</span>
+    </a>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:12px;color:var(--t3)">DSA Learning Platform</span>
+      <span
+        style="font-size:11px;font-weight:600;color:var(--blue);background:var(--blue-g);padding:3px 9px;border-radius:20px;border:1px solid rgba(59,130,246,0.3)">v1.0</span>
+    </div>
+  </header>
+
+  <section class="home-hero">
+    <div class="hero-badge">✦ Interactive DSA Simulator</div>
+    <h1 class="hero-title">Visualize Algorithms<br><span class="grad">Step by Step</span></h1>
+    <p class="hero-sub">Enter your own inputs, watch algorithms execute step-by-step, understand logic through live
+      explanations, and analyze Time & Space Complexity — all in one place.</p>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val">16</div>
+        <div class="stat-lbl">Algorithms</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">5</div>
+        <div class="stat-lbl">Categories</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">∞</div>
+        <div class="stat-lbl">Custom Inputs</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">3</div>
+        <div class="stat-lbl">Code Languages</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cats-grid">
+    <a class="cat-card" href="divide-conquer.html" style="--cc:#3b82f6;--cg:rgba(59,130,246,0.15)">
+      <div class="cat-icon">⚡</div>
+      <div class="cat-title">Divide & Conquer</div>
+      <div class="cat-desc">Break problems into sub-problems, solve recursively and combine. Visualize the classic O(n
+        log n) sorting algorithms.</div>
+      <div class="cat-chips"><span class="cat-chip">Quick Sort</span><span class="cat-chip">Merge Sort</span></div>
+      <div class="cat-arrow">→</div>
+    </a>
+    <a class="cat-card" href="greedy.html" style="--cc:#10b981;--cg:rgba(16,185,129,0.15)">
+      <div class="cat-icon">🟢</div>
+      <div class="cat-title">Greedy Algorithms</div>
+      <div class="cat-desc">Make locally optimal choices at each step to find global optimum. See greedy decisions in
+        real-time with visual feedback.</div>
+      <div class="cat-chips"><span class="cat-chip">Fractional Knapsack</span><span class="cat-chip">Job
+          Sequencing</span><span class="cat-chip">Huffman Coding</span></div>
+      <div class="cat-arrow">→</div>
+    </a>
+    <a class="cat-card" href="dynamic-programming.html" style="--cc:#f59e0b;--cg:rgba(245,158,11,0.15)">
+      <div class="cat-icon">🧮</div>
+      <div class="cat-title">Dynamic Programming</div>
+      <div class="cat-desc">Solve complex problems by breaking them down into overlapping sub-problems. Watch DP tables
+        fill up step by step.</div>
+      <div class="cat-chips"><span class="cat-chip">0/1 Knapsack</span><span class="cat-chip">Coin Change</span><span
+          class="cat-chip">LCS</span></div>
+      <div class="cat-arrow">→</div>
+    </a>
+    <a class="cat-card" href="backtracking.html" style="--cc:#f43f5e;--cg:rgba(244,63,94,0.15)">
+      <div class="cat-icon">🔴</div>
+      <div class="cat-title">Backtracking</div>
+      <div class="cat-desc">Explore all possibilities and backtrack when a dead end is found. See constraint
+        satisfaction come alive visually.</div>
+      <div class="cat-chips"><span class="cat-chip">N-Queens</span><span class="cat-chip">Sudoku Solver</span><span
+          class="cat-chip">Rat in a Maze</span><span class="cat-chip">Graph Coloring</span><span
+          class="cat-chip">TSP</span></div>
+      <div class="cat-arrow">→</div>
+    </a>
+    <a class="cat-card" href="data-structures.html" style="--cc:#8b5cf6;--cg:rgba(139,92,246,0.15)">
+      <div class="cat-icon">🗂️</div>
+      <div class="cat-title">Data Structures</div>
+      <div class="cat-desc">Understand queue operations, deque manipulations, and heap-based priority queues through
+        animated, interactive demos.</div>
+      <div class="cat-chips"><span class="cat-chip">Queue</span><span class="cat-chip">Deque</span><span
+          class="cat-chip">Priority Queue</span></div>
+      <div class="cat-arrow">→</div>
+    </a>
+  </div>
+
+  <footer
+    style="text-align:center;padding:24px;border-top:1px solid var(--border);color:var(--t3);font-size:12px;position:relative;z-index:1">
+    ALGO Visualizer & Simulator — ADSA Course Project &nbsp;|&nbsp; Built with ❤️ for DSA learners
+  </footer>
+</body>
+
+</html>

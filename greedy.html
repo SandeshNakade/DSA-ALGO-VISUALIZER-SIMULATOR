@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Greedy Algorithms | ALGO Visualizer</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --accent: var(--green);
+      --accent-g: rgba(16, 185, 129, 0.2)
+    }
+
+    .knapsack-wrap {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .bag-bar {
+      height: 30px;
+      background: var(--bg4);
+      border: 2px solid var(--border);
+      border-radius: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bag-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s;
+    }
+
+    .bag-text {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      top: 5px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .item-box {
+      display: inline-flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      padding: 5px;
+      margin: 5px;
+      border-radius: 5px;
+      background: var(--bg3);
+      text-align: center;
+      min-width: 60px;
+    }
+
+    .item-box.taken {
+      border-color: var(--green);
+      background: rgba(16, 185, 129, 0.2);
+    }
+
+    .item-box.frac {
+      border-color: var(--amber);
+      background: rgba(245, 158, 11, 0.2);
+    }
+
+    .item-box.skip {
+      border-color: var(--rose);
+      background: rgba(244, 63, 94, 0.2);
+    }
+
+    .job-slot {
+      display: inline-flex;
+      width: 40px;
+      height: 40px;
+      border: 2px dashed var(--border);
+      align-items: center;
+      justify-content: center;
+      margin: 5px;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .job-slot.filled {
+      background: var(--green);
+      border-style: solid;
+    }
+
+    .tree-node {
+      display: inline-block;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--bg3);
+      margin: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-grid"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <header class="app-header">
+    <a class="logo" href="index.html">
+      <div class="logo-icon">⚡</div><span class="logo-name">ALGO Visualizer</span>
+    </a>
+    <div class="breadcrumb">
+      <a class="bc-link" href="index.html">Home</a>
+      <span class="bc-sep">/</span>
+      <span class="bc-cat" style="color:var(--green)">Greedy Algorithms</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current" id="bc-algo">Fractional Knapsack</span>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-head">Algorithms</div>
+      <button class="algo-btn active" onclick="selectAlgo('fracKnapsack')" id="btn-fracKnapsack"><span
+          class="algo-dot"></span>Fractional Knapsack</button>
+      <button class="algo-btn" onclick="selectAlgo('jobSeq')" id="btn-jobSeq"><span class="algo-dot"></span>Job
+        Sequencing</button>
+      <button class="algo-btn" onclick="selectAlgo('huffman')" id="btn-huffman"><span class="algo-dot"></span>Huffman
+        Coding</button>
+    </aside>
+
+    <div class="main-panel">
+      <div class="algo-header">
+        <div class="algo-tag" id="algo-tag">🟢 Greedy Algorithms</div>
+        <div class="algo-title" id="algo-title">Fractional Knapsack</div>
+        <div class="algo-desc" id="algo-desc"></div>
+      </div>
+
+      <div class="tabs-bar">
+        <button class="tab-btn active" onclick="showTab('visualizer')">🎬 Visualizer</button>
+        <button class="tab-btn" onclick="showTab('explanation')">📖 Explanation</button>
+        <button class="tab-btn" onclick="showTab('code')">💻 Code</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-visualizer">
+        <div class="input-card">
+          <div class="card-label">Input</div>
+          <div class="input-row" id="input-container">
+            <!-- Dynamic Input -->
+          </div>
+        </div>
+
+        <div class="viz-card">
+          <div class="card-label" id="viz-label">Visualization</div>
+          <div id="viz-area" style="min-height:220px"></div>
+        </div>
+
+        <div class="controls-card">
+          <div class="controls-row">
+            <button class="ctrl-btn" onclick="prevStep()">⏮</button>
+            <button class="ctrl-btn play-btn" id="play-btn" onclick="togglePlay()">▶</button>
+            <button class="ctrl-btn" onclick="nextStep()">⏭</button>
+            <button class="ctrl-btn" onclick="resetAlgo()">🔄</button>
+            <span class="step-counter" id="step-counter">Step 0 / 0</span>
+            <div class="speed-wrap">
+              <span class="speed-label">Speed</span>
+              <input class="speed-input" type="range" id="speed" min="1" max="10" value="5">
+              <span class="speed-label" id="speed-val">5x</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="trace-card">
+          <div class="card-label">Step Trace</div>
+          <div id="trace-list"></div>
+        </div>
+
+        <div class="complexity-card">
+          <div class="card-label">Complexity Analysis</div>
+          <div class="complexity-grid" id="complexity-grid"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-explanation">
+        <div class="explain-section">
+          <h3>Problem</h3>
+          <p id="exp-problem"></p>
+        </div>
+        <div class="explain-section">
+          <h3>Approach</h3>
+          <ul id="exp-approach"></ul>
+        </div>
+        <div class="explain-section">
+          <h3>Pseudocode</h3>
+          <div class="pseudo-block" id="exp-pseudo"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-code">
+        <div class="lang-tabs">
+          <button class="lang-btn active" onclick="showLang('cpp')">C++</button>
+          <button class="lang-btn" onclick="showLang('py')">Python</button>
+          <button class="lang-btn" onclick="showLang('js')">JavaScript</button>
+        </div>
+        <div class="code-block" id="code-display"></div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-dot idle" id="status-dot"></div><span id="status-text">Ready — click Visualize to
+          start</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ALGOS = {
+      fracKnapsack: {
+        name: 'Fractional Knapsack', tag: '🟢 Greedy Algorithms',
+        desc: 'Selects items to maximize total value without exceeding capacity. Allows taking fractions of an item.',
+        complexity: [{ l: 'Time', v: 'O(n log n)' }, { l: 'Space', v: 'O(1)' }],
+        problem: 'Given weights and values of n items, put these items in a knapsack of capacity W to get the maximum total value.',
+        approach: ['Calculate ratio (value/weight) for each item', 'Sort items in descending order of ratio', 'Take whole items until capacity is full', 'Take fraction of next item to exactly fill capacity'],
+        pseudo: `for each item:
+  ratio = value / weight
+sort items by ratio descending
+for each item:
+  if weight <= capacity:
+    add entire item; capacity -= weight
+  else:
+    add fraction = capacity / weight
+    break`,
+        codes: {
+          cpp: `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Item { int value, weight; };
+bool cmp(Item a, Item b) {
+    double r1 = (double)a.value / a.weight;
+    double r2 = (double)b.value / b.weight;
+    return r1 > r2;
+}
+
+double fractionalKnapsack(int W, vector<Item>& arr) {
+    sort(arr.begin(), arr.end(), cmp);
+    double finalValue = 0.0;
+    for (auto item : arr) {
+        if (item.weight <= W) {
+            W -= item.weight;
+            finalValue += item.value;
+        } else {
+            finalValue += item.value * ((double)W / item.weight);
+            break;
+        }
+    }
+    return finalValue;
+}`,
+          py: `def fractional_knapsack(W, arr):
+    arr.sort(key=lambda x: (x[0]/x[1]), reverse=True)
+    final_val = 0.0
+    for item in arr:
+        if item[1] <= W:
+            W -= item[1]
+            final_val += item[0]
+        else:
+            final_val += item[0] * W / item[1]
+            break
+    return final_val`,
+          js: `function fractionalKnapsack(W, arr) {
+    arr.sort((a,b) => (b.v/b.w) - (a.v/a.w));
+    let finalVal = 0;
+    for(let i of arr) {
+        if(i.w <= W) {
+            W -= i.w;
+            finalVal += i.v;
+        } else {
+            finalVal += i.v * (W / i.w);
+            break;
+        }
+    }
+    return finalVal;
+}`
+        },
+        inputs: `
+      <div class="field"><label>Values</label><input id="fk-val" value="60,100,120"></div>
+      <div class="field"><label>Weights</label><input id="fk-wt" value="10,20,30"></div>
+      <div class="field"><label>Capacity</label><input id="fk-cap" value="50" style="width:80px"></div>
+      <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+    `,
+        genSteps() {
+          const vals = document.getElementById('fk-val').value.split(',').map(Number);
+          const wts = document.getElementById('fk-wt').value.split(',').map(Number);
+          let cap = Number(document.getElementById('fk-cap').value);
+          let initCap = cap;
+          let items = vals.map((v, i) => ({ id: i + 1, v, w: wts[i], r: v / wts[i], status: 'wait' }));
+          let steps = [];
+          steps.push({ items: JSON.parse(JSON.stringify(items)), initCap, cap, curWt: 0, curVal: 0, desc: 'Initial items', explain: 'Calculate value/weight ratio for each item' });
+          items.sort((a, b) => b.r - a.r);
+          steps.push({ items: JSON.parse(JSON.stringify(items)), initCap, cap, curWt: 0, curVal: 0, desc: 'Items sorted', explain: 'Sorted descending by ratio' });
+          let curWt = 0, curVal = 0;
+          for (let item of items) {
+            if (cap === 0) {
+              item.status = 'skip';
+              continue;
+            }
+            if (item.w <= cap) {
+              item.status = 'taken';
+              cap -= item.w;
+              curWt += item.w;
+              curVal += item.v;
+              steps.push({ items: JSON.parse(JSON.stringify(items)), initCap, cap, curWt, curVal, desc: `Take Item ${item.id}`, explain: `Added full item. Remaining cap: ${cap}` });
+            } else {
+              item.status = 'frac';
+              let frac = cap / item.w;
+              curWt += cap;
+              curVal += item.v * frac;
+              cap = 0;
+              steps.push({ items: JSON.parse(JSON.stringify(items)), initCap, cap, curWt, curVal, desc: `Take ${(frac * 100).toFixed(0)}% of Item ${item.id}`, explain: `Knapsack full. Max value: ${curVal.toFixed(2)}` });
+            }
+          }
+          return steps;
+        },
+        render(s) {
+          let itemsHtml = s.items.map(i => `
+        <div class="item-box ${i.status}">
+          <div style="font-weight:bold">Item ${i.id}</div>
+          <div>V:${i.v} W:${i.w}</div>
+          <div style="font-size:10px">Rat: ${i.r.toFixed(2)}</div>
+        </div>
+      `).join('');
+          let pct = (s.curWt / s.initCap) * 100 || 0;
+          let bagHtml = `<div class="bag-bar"><div class="bag-fill" style="width:${pct}%"></div><div class="bag-text">${s.curWt} / ${s.initCap} (Value: ${s.curVal.toFixed(2)})</div></div>`;
+          return `<div class="knapsack-wrap">${bagHtml}<div>${itemsHtml}</div></div>`;
+        }
+      },
+      jobSeq: {
+        name: 'Job Sequencing', tag: '🟢 Greedy Algorithms',
+        desc: 'Maximize profit by completing jobs within their deadlines. Each job takes 1 unit of time.',
+        complexity: [{ l: 'Time', v: 'O(n²)' }, { l: 'Space', v: 'O(n)' }],
+        problem: 'Given an array of jobs where every job has a deadline and associated profit if finished before the deadline.',
+        approach: ['Sort jobs in decreasing order of profit', 'Iterate through jobs', 'For each job, find latest available time slot before deadline', 'Assign job to that slot'],
+        pseudo: `Sort jobs by profit descending
+slots = array of size max_deadline
+for each job in jobs:
+  for j = min(job.deadline, max_deadline)-1 down to 0:
+    if slots[j] is empty:
+      slots[j] = job
+      break`,
+        codes: {
+          cpp: `struct Job {
+    char id;
+    int dead;
+    int profit;
+};
+
+bool comparison(Job a, Job b) {
+    return (a.profit > b.profit);
+}
+
+vector<char> JobScheduling(Job arr[], int n) {
+    sort(arr, arr + n, comparison);
+    int result[n];
+    bool slot[n];
+    for (int i = 0; i < n; i++) slot[i] = false;
+
+    vector<char> jobs;
+    for (int i = 0; i < n; i++) {
+        for (int j = min(n, arr[i].dead) - 1; j >= 0; j--) {
+            if (slot[j] == false) {
+                result[j] = i;
+                slot[j] = true;
+                break;
+            }
+        }
+    }
+    for (int i = 0; i < n; i++)
+        if (slot[i]) jobs.push_back(arr[result[i]].id);
+    return jobs;
+}`,
+          py: `def job_scheduling(jobs):
+    # jobs is a list of tuples: (id, deadline, profit)
+    jobs.sort(key=lambda x: x[2], reverse=True)
+    
+    max_deadline = max(job[1] for job in jobs)
+    slots = [None] * max_deadline
+    
+    for job in jobs:
+        for j in range(min(max_deadline, job[1]) - 1, -1, -1):
+            if slots[j] is None:
+                slots[j] = job[0]
+                break
+                
+    return [job for job in slots if job is not None]`,
+          js: `function jobScheduling(jobs) {
+    // jobs is array of {id, d, p}
+    jobs.sort((a, b) => b.p - a.p);
+    
+    let maxD = Math.max(...jobs.map(j => j.d));
+    let slots = new Array(maxD).fill(null);
+    
+    for(let job of jobs) {
+        for(let j = Math.min(maxD, job.d) - 1; j >= 0; j--) {
+            if(slots[j] === null) {
+                slots[j] = job.id;
+                break;
+            }
+        }
+    }
+    return slots.filter(s => s !== null);
+}`
+        },
+        inputs: `
+      <div class="field"><label>Profits</label><input id="js-pro" value="100,19,27,25,15"></div>
+      <div class="field"><label>Deadlines</label><input id="js-dead" value="2,1,2,1,3"></div>
+      <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+    `,
+        genSteps() {
+          let p = document.getElementById('js-pro').value.split(',').map(Number);
+          let d = document.getElementById('js-dead').value.split(',').map(Number);
+          let jobs = p.map((pr, i) => ({ id: 'J' + (i + 1), p: pr, d: d[i], slot: -1 }));
+          let maxD = Math.max(...d);
+          let slots = new Array(maxD).fill(null);
+          let steps = [];
+          steps.push({ jobs: JSON.parse(JSON.stringify(jobs)), slots: [...slots], desc: 'Initial Jobs', explain: 'Jobs with profits and deadlines' });
+          jobs.sort((a, b) => b.p - a.p);
+          steps.push({ jobs: JSON.parse(JSON.stringify(jobs)), slots: [...slots], desc: 'Sorted Jobs', explain: 'Sorted descending by profit' });
+          let curPro = 0;
+          for (let j of jobs) {
+            steps.push({ jobs: JSON.parse(JSON.stringify(jobs)), slots: [...slots], hlJob: j.id, desc: `Checking ${j.id}`, explain: `Look for slot <= ${j.d}` });
+            for (let s = Math.min(maxD, j.d) - 1; s >= 0; s--) {
+              if (slots[s] === null) {
+                slots[s] = j.id;
+                j.slot = s;
+                curPro += j.p;
+                steps.push({ jobs: JSON.parse(JSON.stringify(jobs)), slots: [...slots], hlJob: j.id, desc: `Assigned ${j.id}`, explain: `Assigned to slot ${s + 1}. Total Profit: ${curPro}` });
+                break;
+              }
+            }
+          }
+          return steps;
+        },
+        render(s) {
+          let jobsHtml = s.jobs.map(j => `
+        <div class="item-box ${j.slot !== -1 ? 'taken' : ''} ${s.hlJob === j.id ? 'frac' : ''}">
+          <div style="font-weight:bold">${j.id}</div>
+          <div>P:${j.p} D:${j.d}</div>
+        </div>
+      `).join('');
+          let slotsHtml = s.slots.map((jobId, i) => `
+        <div class="job-slot ${jobId ? 'filled' : ''}">
+          ${jobId || (i + 1)}
+        </div>
+      `).join('');
+          return `<div class="knapsack-wrap"><div><b>Time Slots:</b> ${slotsHtml}</div><div><b>Jobs:</b><br>${jobsHtml}</div></div>`;
+        }
+      },
+      huffman: {
+        name: 'Huffman Coding', tag: '🟢 Greedy Algorithms',
+        desc: 'Lossless data compression algorithm. Assigns variable-length codes based on frequencies.',
+        complexity: [{ l: 'Time', v: 'O(n log n)' }, { l: 'Space', v: 'O(n)' }],
+        problem: 'Given a string, build a Huffman tree to find the optimal prefix code.',
+        approach: ['Calculate frequencies', 'Create leaf node for each char and build min-heap', 'Extract two nodes with min freq', 'Create new parent node with sum of freqs', 'Repeat until one node remains'],
+        pseudo: `freq = calculate_frequencies(string)
+heap = min_heap(freq)
+while heap.size() > 1:
+  left = heap.extract_min()
+  right = heap.extract_min()
+  parent = new Node(left.freq + right.freq, left, right)
+  heap.insert(parent)`,
+        codes: {
+          cpp: `struct MinHeapNode {
+    char data;
+    unsigned freq;
+    MinHeapNode *left, *right;
+    MinHeapNode(char data, unsigned freq) {
+        left = right = NULL;
+        this->data = data;
+        this->freq = freq;
+    }
+};
+
+struct compare {
+    bool operator()(MinHeapNode* l, MinHeapNode* r) {
+        return (l->freq > r->freq);
+    }
+};
+
+void HuffmanCodes(char data[], int freq[], int size) {
+    priority_queue<MinHeapNode*, vector<MinHeapNode*>, compare> minHeap;
+    for (int i = 0; i < size; ++i)
+        minHeap.push(new MinHeapNode(data[i], freq[i]));
+
+    while (minHeap.size() != 1) {
+        MinHeapNode *left = minHeap.top(); minHeap.pop();
+        MinHeapNode *right = minHeap.top(); minHeap.pop();
+        MinHeapNode *top = new MinHeapNode('$', left->freq + right->freq);
+        top->left = left;
+        top->right = right;
+        minHeap.push(top);
+    }
+    // Root of Huffman Tree is now minHeap.top()
+}`,
+          py: `import heapq
+
+class Node:
+    def __init__(self, freq, symbol, left=None, right=None):
+        self.freq = freq
+        self.symbol = symbol
+        self.left = left
+        self.right = right
+
+    def __lt__(self, nxt):
+        return self.freq < nxt.freq
+
+def huffman_coding(chars, freqs):
+    nodes = []
+    for x in range(len(chars)):
+        heapq.heappush(nodes, Node(freqs[x], chars[x]))
+
+    while len(nodes) > 1:
+        left = heapq.heappop(nodes)
+        right = heapq.heappop(nodes)
+        newNode = Node(left.freq + right.freq, left.symbol + right.symbol, left, right)
+        heapq.heappush(nodes, newNode)
+        
+    return nodes[0] # Returns root node`,
+          js: `class Node {
+    constructor(char, freq, left = null, right = null) {
+        this.char = char;
+        this.freq = freq;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+function huffmanCoding(str) {
+    let freqs = {};
+    for (let char of str) freqs[char] = (freqs[char] || 0) + 1;
+    
+    let nodes = Object.keys(freqs).map(k => new Node(k, freqs[k]));
+    
+    while (nodes.length > 1) {
+        nodes.sort((a, b) => a.freq - b.freq);
+        let left = nodes.shift();
+        let right = nodes.shift();
+        let parent = new Node('$', left.freq + right.freq, left, right);
+        nodes.push(parent);
+    }
+    
+    return nodes[0]; // Returns root node
+}`
+        },
+        inputs: `
+      <div class="field"><label>String</label><input id="hc-str" value="BCCABBDDAECCBBAEDDCC"></div>
+      <button class="btn btn-primary" onclick="initAlgo()">▶ Visualize</button>
+    `,
+        genSteps() {
+          let str = document.getElementById('hc-str').value;
+          let fmap = {};
+          for (let c of str) fmap[c] = (fmap[c] || 0) + 1;
+          let nodes = Object.keys(fmap).map(k => ({ c: k, f: fmap[k], id: Math.random().toString(36).substr(2, 5) }));
+          let steps = [];
+          steps.push({ nodes: JSON.parse(JSON.stringify(nodes)), desc: 'Char Frequencies', explain: Object.keys(fmap).map(k => `${k}:${fmap[k]}`).join(', ') });
+          while (nodes.length > 1) {
+            nodes.sort((a, b) => a.f - b.f);
+            let left = nodes.shift();
+            let right = nodes.shift();
+            let parent = { c: left.c + right.c, f: left.f + right.f, left, right };
+            steps.push({ nodes: JSON.parse(JSON.stringify(nodes)), hl: [left, right], merged: parent, desc: `Merge min freq nodes`, explain: `Merged ${left.c}(${left.f}) and ${right.c}(${right.f}) -> ${parent.f}` });
+            nodes.push(parent);
+          }
+          steps.push({ nodes: JSON.parse(JSON.stringify(nodes)), desc: 'Huffman Tree Complete', explain: 'Root node formed' });
+          return steps;
+        },
+        render(s) {
+          function renderTree(node) {
+            if (!node) return '';
+            let inner = `<div class="tree-node" style="font-size:12px;">${node.c} : ${node.f}</div>`;
+            if (node.left || node.right) {
+              inner += `<div style="display:flex;gap:10px;justify-content:center;margin-top:5px;">
+            <div>${renderTree(node.left)}</div>
+            <div>${renderTree(node.right)}</div>
+          </div>`;
+            }
+            return `<div style="text-align:center;">${inner}</div>`;
+          }
+
+          let html = '';
+          if (s.nodes) html += `<div><b>Forest:</b><br><div style="display:flex;flex-wrap:wrap;gap:10px;">` + s.nodes.map(n => renderTree(n)).join('') + `</div></div>`;
+          if (s.merged) html += `<div style="margin-top:20px;padding:10px;border:1px solid var(--border);"><b>Newly Merged:</b><br>${renderTree(s.merged)}</div>`;
+          if (s.hl) html += `<div style="color:var(--amber);margin-top:10px;"><i>Selected for merge: ${s.hl[0].c}(${s.hl[0].f}) & ${s.hl[1].c}(${s.hl[1].f})</i></div>`;
+          return html;
+        }
+      }
+    };
+
+    let current = 'fracKnapsack', steps = [], stepIdx = 0, playing = false, timer = null, currentLang = 'cpp';
+
+    function selectAlgo(id) {
+      current = id;
+      document.querySelectorAll('.algo-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + id).classList.add('active');
+      const A = ALGOS[id];
+      document.getElementById('bc-algo').textContent = A.name;
+      document.getElementById('algo-tag').textContent = A.tag;
+      document.getElementById('algo-title').textContent = A.name;
+      document.getElementById('algo-desc').textContent = A.desc;
+      document.getElementById('input-container').innerHTML = A.inputs;
+      resetAlgo(); loadExplain(); loadCode();
+    }
+
+    function loadExplain() {
+      const A = ALGOS[current];
+      document.getElementById('exp-problem').textContent = A.problem;
+      document.getElementById('exp-approach').innerHTML = A.approach.map(s => `<li>${s}</li>`).join('');
+      document.getElementById('exp-pseudo').textContent = A.pseudo;
+    }
+
+    function loadCode() {
+      const A = ALGOS[current];
+      document.getElementById('code-display').textContent = A.codes[currentLang] || '';
+    }
+
+    function showLang(l) {
+      currentLang = l;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      loadCode();
+    }
+
+    function showTab(t) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + t).classList.add('active');
+    }
+
+    function initAlgo() {
+      steps = ALGOS[current].genSteps();
+      stepIdx = 0;
+      updateComplexity();
+      renderStep();
+      setStatus('ready');
+    }
+
+    function updateComplexity() {
+      const c = ALGOS[current].complexity;
+      document.getElementById('complexity-grid').innerHTML = c.map(x => `<div class="complexity-item"><div class="complexity-label">${x.l}</div><div class="complexity-value">${x.v}</div></div>`).join('');
+    }
+
+    function renderStep() {
+      if (!steps.length) return;
+      const s = steps[Math.min(stepIdx, steps.length - 1)];
+      document.getElementById('viz-label').textContent = `Step ${stepIdx + 1} / ${steps.length}`;
+      document.getElementById('step-counter').textContent = `Step ${stepIdx + 1} / ${steps.length}`;
+      document.getElementById('viz-area').innerHTML = ALGOS[current].render(s);
+      updateTrace(s);
+    }
+
+    function updateTrace(s) {
+      const list = document.getElementById('trace-list');
+      const item = document.createElement('div');
+      item.className = 'trace-item current fade-in';
+      item.innerHTML = `<div>${s.desc}</div><div class="trace-explain">${s.explain}</div>`;
+      const prev = list.querySelector('.current');
+      if (prev) prev.className = 'trace-item done';
+      list.prepend(item);
+      while (list.children.length > 8) list.removeChild(list.lastChild);
+    }
+
+    function nextStep() {
+      if (stepIdx < steps.length - 1) { stepIdx++; renderStep(); }
+      else { stopPlay(); setStatus('done'); }
+    }
+
+    function prevStep() { stopPlay(); if (stepIdx > 0) { stepIdx--; renderStep(); } }
+
+    function togglePlay() {
+      if (playing) stopPlay();
+      else startPlay();
+    }
+
+    function startPlay() {
+      if (!steps.length) { initAlgo(); return; }
+      playing = true;
+      document.getElementById('play-btn').textContent = '⏸';
+      document.getElementById('status-dot').className = 'status-dot running';
+      document.getElementById('status-text').textContent = 'Running...';
+      function tick() {
+        if (stepIdx >= steps.length - 1) { stopPlay(); setStatus('done'); return; }
+        stepIdx++; renderStep();
+        const spd = parseInt(document.getElementById('speed').value);
+        timer = setTimeout(tick, 1100 - spd * 100);
+      }
+      tick();
+    }
+
+    function stopPlay() {
+      playing = false;
+      clearTimeout(timer);
+      document.getElementById('play-btn').textContent = '▶';
+      if (document.getElementById('status-dot').className.includes('running'))
+        setStatus('ready');
+    }
+
+    function resetAlgo() {
+      stopPlay(); steps = []; stepIdx = 0;
+      document.getElementById('viz-area').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--t3);font-size:14px">Enter input and click Visualize</div>';
+      document.getElementById('trace-list').innerHTML = '';
+      document.getElementById('step-counter').textContent = 'Step 0 / 0';
+      document.getElementById('viz-label').textContent = 'Visualization';
+      setStatus('idle');
+    }
+
+    function setStatus(s) {
+      const dot = document.getElementById('status-dot');
+      const txt = document.getElementById('status-text');
+      if (s === 'idle') { dot.className = 'status-dot idle'; txt.textContent = 'Ready — click Visualize to start'; }
+      else if (s === 'ready') { dot.className = 'status-dot'; txt.textContent = 'Steps generated — use controls to navigate'; }
+      else if (s === 'done') { dot.className = 'status-dot'; txt.textContent = '✅ Algorithm complete!'; }
+    }
+
+    document.getElementById('speed').addEventListener('input', function () {
+      document.getElementById('speed-val').textContent = this.value + 'x';
+    });
+
+    selectAlgo('fracKnapsack');
+  </script>
+</body>
+
+</html>
